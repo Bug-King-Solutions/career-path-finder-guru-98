@@ -11,7 +11,8 @@ import {
   CheckCircle,
   ArrowRight
 } from "lucide-react";
-import appMockup from "@/assets/app-mockup.jpg";
+import appMockup from "@/assets/career-guru-mockup.jpg";
+import { WaitlistForm } from "./WaitlistForm";
 
 export const CareerGuruApp = () => {
   const features = [
@@ -156,10 +157,12 @@ export const CareerGuruApp = () => {
                     <li>• Priority university placement assistance</li>
                     <li>• Exclusive career webinars and workshops</li>
                   </ul>
-                  <Button variant="accent" className="w-full mt-4">
-                    Join Waiting List
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
+                  <WaitlistForm>
+                    <Button variant="accent" className="w-full mt-4">
+                      Join Waiting List
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  </WaitlistForm>
                 </CardContent>
               </Card>
 

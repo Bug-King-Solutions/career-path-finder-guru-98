@@ -10,6 +10,7 @@ import {
   ArrowRight,
   CheckCircle
 } from "lucide-react";
+import { BookingForm } from "./BookingForm";
 
 export const Services = () => {
   const services = [
@@ -141,10 +142,12 @@ export const Services = () => {
               Book a consultation with Mr. Paul Olayiwola today and take the first step towards your dream career.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="accent" size="lg" className="text-lg px-8 py-4">
-                Book Consultation
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
+              <BookingForm>
+                <Button variant="accent" size="lg" className="text-lg px-8 py-4">
+                  Book Consultation
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </BookingForm>
               <Button variant="outline" size="lg" className="text-lg px-8 py-4 bg-white/10 border-white/30 text-white hover:bg-white hover:text-primary">
                 Download Career Guide
               </Button>

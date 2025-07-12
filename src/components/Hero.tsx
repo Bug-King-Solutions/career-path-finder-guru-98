@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, BookOpen, Award } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import { BookingForm } from "./BookingForm";
 
 export const Hero = () => {
   return (

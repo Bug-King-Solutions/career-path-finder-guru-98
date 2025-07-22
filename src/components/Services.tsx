@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -13,6 +14,13 @@ import {
 import { BookingForm } from "./BookingForm";
 
 export const Services = () => {
+  const handleLearnMore = () => {
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const services = [
     {
       icon: Brain,
@@ -124,7 +132,11 @@ export const Services = () => {
                     </li>
                   ))}
                 </ul>
-                <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <Button 
+                  variant="outline" 
+                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  onClick={handleLearnMore}
+                >
                   Learn More
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

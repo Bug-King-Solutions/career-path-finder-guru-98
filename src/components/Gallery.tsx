@@ -7,7 +7,7 @@ const projects = [
     id: 1,
     title: "Career Guidance Workshop - University of Jos",
     description: "Successfully guided 200+ students in career path selection",
-    image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1542435503-956c469947f6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     year: "2023",
     fullDescription: "A comprehensive 3-day career guidance workshop conducted at the University of Jos in partnership with the Student Affairs Department. The workshop focused on helping students understand their strengths, interests, and career opportunities in their chosen fields.",
     participants: "200+ university students",
@@ -23,7 +23,7 @@ const projects = [
     id: 2,
     title: "Psychology Assessment Program",
     description: "Comprehensive psychological testing for 150+ teenagers",
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     year: "2023",
     fullDescription: "An intensive psychological assessment program designed to help teenagers understand their personality types, learning styles, and career aptitudes. The program included standardized psychological tests, one-on-one consultations, and personalized career recommendations.",
     participants: "150+ teenagers (ages 14-19)",
@@ -39,28 +39,28 @@ const projects = [
     id: 3,
     title: "Mindscope Empowerment Summit",
     description: "Annual summit reaching 500+ young people across Plateau State",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1594736797933-d0401ba937b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     year: "2022"
   },
   {
     id: 4,
     title: "School Career Days",
     description: "Visited 20+ secondary schools providing career guidance",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     year: "2022"
   },
   {
     id: 5,
     title: "Online Career Webinar Series",
     description: "Monthly webinars with 300+ participants nationwide",
-    image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     year: "2023"
   },
   {
     id: 6,
     title: "Parent-Student Career Sessions",
     description: "Family-focused career guidance sessions",
-    image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1580894908361-967195033215?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     year: "2023"
   }
 ];

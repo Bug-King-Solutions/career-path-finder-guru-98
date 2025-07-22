@@ -28,17 +28,6 @@ export const Header = () => {
             <a href="#contact" className="text-foreground hover:text-primary transition-colors">Contact</a>
           </nav>
 
-          {/* Contact Info */}
-          <div className="hidden lg:flex items-center space-x-4 text-sm text-muted-foreground">
-            <div className="flex items-center space-x-1">
-              <Phone className="w-4 h-4" />
-              <span>Jos, Nigeria</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Mail className="w-4 h-4" />
-              <span>mindscope@academy.com</span>
-            </div>
-          </div>
 
           {/* Mobile Menu Button */}
           <button

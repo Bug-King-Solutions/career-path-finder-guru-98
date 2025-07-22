@@ -7,7 +7,7 @@ const projects = [
     id: 1,
     title: "Career Guidance Workshop - University of Jos",
     description: "Successfully guided 200+ students in career path selection",
-    image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     year: "2023",
     fullDescription: "A comprehensive 3-day career guidance workshop conducted at the University of Jos in partnership with the Student Affairs Department. The workshop focused on helping students understand their strengths, interests, and career opportunities in their chosen fields.",
     participants: "200+ university students",
@@ -39,28 +39,28 @@ const projects = [
     id: 3,
     title: "Mindscope Empowerment Summit",
     description: "Annual summit reaching 500+ young people across Plateau State",
-    image: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     year: "2022"
   },
   {
     id: 4,
     title: "School Career Days",
     description: "Visited 20+ secondary schools providing career guidance",
-    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     year: "2022"
   },
   {
     id: 5,
     title: "Online Career Webinar Series",
     description: "Monthly webinars with 300+ participants nationwide",
-    image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     year: "2023"
   },
   {
     id: 6,
     title: "Parent-Student Career Sessions",
     description: "Family-focused career guidance sessions",
-    image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     year: "2023"
   }
 ];

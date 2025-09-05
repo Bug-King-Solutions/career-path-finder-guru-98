@@ -110,9 +110,9 @@ const universities: University[] = [
 
 export const UniversityFinder = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedState, setSelectedState] = useState("");
-  const [selectedType, setSelectedType] = useState("");
-  const [selectedProgram, setSelectedProgram] = useState("");
+  const [selectedState, setSelectedState] = useState("all-states");
+  const [selectedType, setSelectedType] = useState("all-types");
+  const [selectedProgram, setSelectedProgram] = useState("all-programs");
 
   const states = [...new Set(universities.map(uni => uni.state))].sort();
   const types = [...new Set(universities.map(uni => uni.type))];
@@ -121,18 +121,18 @@ export const UniversityFinder = () => {
   const filteredUniversities = universities.filter(uni => {
     const matchesSearch = uni.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          uni.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesState = !selectedState || uni.state === selectedState;
-    const matchesType = !selectedType || uni.type === selectedType;
-    const matchesProgram = !selectedProgram || uni.programs.includes(selectedProgram);
+    const matchesState = !selectedState || selectedState === "all-states" || uni.state === selectedState;
+    const matchesType = !selectedType || selectedType === "all-types" || uni.type === selectedType;
+    const matchesProgram = !selectedProgram || selectedProgram === "all-programs" || uni.programs.includes(selectedProgram);
 
     return matchesSearch && matchesState && matchesType && matchesProgram;
   });
 
   const clearFilters = () => {
     setSearchTerm("");
-    setSelectedState("");
-    setSelectedType("");
-    setSelectedProgram("");
+    setSelectedState("all-states");
+    setSelectedType("all-types");
+    setSelectedProgram("all-programs");
   };
 
   return (
@@ -164,7 +164,7 @@ export const UniversityFinder = () => {
                 <SelectValue placeholder="Select State" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All States</SelectItem>
+                <SelectItem value="all-states">All States</SelectItem>
                 {states.map(state => (
                   <SelectItem key={state} value={state}>{state}</SelectItem>
                 ))}
@@ -176,7 +176,7 @@ export const UniversityFinder = () => {
                 <SelectValue placeholder="University Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all-types">All Types</SelectItem>
                 {types.map(type => (
                   <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
@@ -188,7 +188,7 @@ export const UniversityFinder = () => {
                 <SelectValue placeholder="Program/Faculty" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Programs</SelectItem>
+                <SelectItem value="all-programs">All Programs</SelectItem>
                 {allPrograms.map(program => (
                   <SelectItem key={program} value={program}>{program}</SelectItem>
                 ))}

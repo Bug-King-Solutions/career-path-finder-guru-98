@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, BookOpen, Award } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import { BookingForm } from "./BookingForm";
+import { useNavigate } from "react-router-dom";
 
 export const Hero = () => {
+  const navigate = useNavigate();
+
   return (
     <section id="home" className="relative py-20 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-hero opacity-90"></div>
@@ -30,7 +33,12 @@ export const Hero = () => {
                 Get Career Guidance
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-4 bg-white/10 border-white/30 text-white hover:bg-white hover:text-primary">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="text-lg px-8 py-4 bg-white/10 border-white/30 text-white hover:bg-white hover:text-primary"
+                onClick={() => navigate('/psychology-test')}
+              >
                 Take Psychology Test
               </Button>
             </div>

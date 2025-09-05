@@ -14,9 +14,9 @@ import {
   BookOpen,
   Target
 } from "lucide-react";
-import { PsychologyTest } from "./PsychologyTest";
 import { UniversityFinder } from "./UniversityFinder";
 import { CareerMatcher } from "./CareerMatcher";
+import { Link } from "react-router-dom";
 
 export const CareerGuidanceSystem = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -93,9 +93,8 @@ export const CareerGuidanceSystem = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <div className="flex justify-center">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full max-w-2xl">
+            <TabsList className="grid grid-cols-1 md:grid-cols-3 w-full max-w-2xl">
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="psychology">Psychology Test</TabsTrigger>
               <TabsTrigger value="career">Career Match</TabsTrigger>
               <TabsTrigger value="university">Universities</TabsTrigger>
             </TabsList>
@@ -122,7 +121,6 @@ export const CareerGuidanceSystem = () => {
                 <Card 
                   key={index} 
                   className="shadow-card hover:shadow-elegant transition-all duration-300 cursor-pointer"
-                  onClick={() => setActiveTab(feature.id)}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -141,7 +139,20 @@ export const CareerGuidanceSystem = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">{feature.description}</p>
+                    <p className="text-muted-foreground mb-4">{feature.description}</p>
+                    {feature.id === 'psychology' ? (
+                      <Link to="/psychology-test">
+                        <Button className="w-full">Take Test</Button>
+                      </Link>
+                    ) : (
+                      <Button 
+                        onClick={() => setActiveTab(feature.id)} 
+                        className="w-full"
+                        disabled={feature.id === 'guidance'}
+                      >
+                        {feature.id === 'guidance' ? 'Coming Soon' : 'Explore'}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -180,14 +191,15 @@ export const CareerGuidanceSystem = () => {
                         Begin your career discovery journey with our comprehensive assessment tools.
                       </p>
                       <div className="space-y-3">
-                        <Button 
-                          variant="accent" 
-                          className="w-full"
-                          onClick={() => setActiveTab("psychology")}
-                        >
-                          <Brain className="mr-2 w-4 h-4" />
-                          Start Psychology Test
-                        </Button>
+                        <Link to="/psychology-test">
+                          <Button 
+                            variant="accent" 
+                            className="w-full"
+                          >
+                            <Brain className="mr-2 w-4 h-4" />
+                            Start Psychology Test
+                          </Button>
+                        </Link>
                         <Button 
                           variant="secondary" 
                           className="w-full"
@@ -235,9 +247,6 @@ export const CareerGuidanceSystem = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="psychology">
-            <PsychologyTest />
-          </TabsContent>
 
           <TabsContent value="career">
             <CareerMatcher />

@@ -1,9 +1,23 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Mail } from "lucide-react";
+import { Menu, X, Phone, Mail, User, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut, userRole } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been successfully signed out.",
+    });
+  };
 
   return (
     <header className="bg-background/95 backdrop-blur-sm shadow-card sticky top-0 z-50">
@@ -26,6 +40,36 @@ export const Header = () => {
             <a href="#services" className="text-foreground hover:text-primary transition-colors">Services</a>
             <a href="#app" className="text-foreground hover:text-primary transition-colors">Career Guru</a>
             <a href="#contact" className="text-foreground hover:text-primary transition-colors">Contact</a>
+            
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-muted-foreground">
+                  {userRole && (
+                    <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium mr-2">
+                      {userRole}
+                    </span>
+                  )}
+                  {user.email}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="text-foreground hover:text-primary"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={() => navigate("/auth")}
+                className="text-white bg-primary hover:bg-primary/90"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            )}
           </nav>
 
 
@@ -47,6 +91,36 @@ export const Header = () => {
               <a href="#services" className="text-foreground hover:text-primary transition-colors">Services</a>
               <a href="#app" className="text-foreground hover:text-primary transition-colors">Career Guru</a>
               <a href="#contact" className="text-foreground hover:text-primary transition-colors">Contact</a>
+              
+              {user ? (
+                <div className="flex flex-col space-y-3 pt-3 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    {userRole && (
+                      <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium mr-2">
+                        {userRole}
+                      </span>
+                    )}
+                    {user.email}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="justify-start text-foreground hover:text-primary"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => navigate("/auth")}
+                  className="text-white bg-primary hover:bg-primary/90 mt-3"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              )}
             </div>
           </nav>
         )}

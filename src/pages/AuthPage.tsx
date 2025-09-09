@@ -11,6 +11,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 
+interface SchoolOption {
+  id: string;
+  school_name: string;
+  school_type: string;
+}
+
 export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,20 +26,33 @@ export default function AuthPage() {
   const [lastName, setLastName] = useState('');
   const [schoolName, setSchoolName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
+  const [schoolOptions, setSchoolOptions] = useState<SchoolOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already logged in
-    const checkUser = async () => {
+    // Check if user is already logged in and fetch school options
+    const initialize = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         navigate("/dashboard");
       }
+
+      // Fetch school options for student signup
+      const { data: schools, error } = await supabase
+        .from('school_options')
+        .select('id, school_name, school_type')
+        .order('school_type', { ascending: true })
+        .order('school_name', { ascending: true });
+
+      if (!error && schools) {
+        setSchoolOptions(schools);
+      }
     };
-    checkUser();
+    initialize();
   }, [navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -129,7 +148,8 @@ export default function AuthPage() {
               user_id: data.user.id,
               first_name: firstName,
               last_name: lastName,
-              email: email
+              email: email,
+              school_id: selectedSchoolId || null
             });
 
           if (studentError) {
@@ -162,6 +182,7 @@ export default function AuthPage() {
         setLastName('');
         setSchoolName('');
         setContactEmail('');
+        setSelectedSchoolId('');
         setUserRole('student');
       }
     } catch (err) {
@@ -311,6 +332,22 @@ export default function AuthPage() {
                             required
                           />
                         </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="student-school">School (Optional)</Label>
+                        <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your school" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {schoolOptions.map((school) => (
+                              <SelectItem key={school.id} value={school.id}>
+                                {school.school_name} ({school.school_type === 'secondary' ? 'Secondary School' : 'University'})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </>
                   )}

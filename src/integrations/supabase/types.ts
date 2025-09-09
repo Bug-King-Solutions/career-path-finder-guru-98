@@ -143,6 +143,30 @@ export type Database = {
         }
         Relationships: []
       }
+      school_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          location: string
+          school_name: string
+          school_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          location?: string
+          school_name: string
+          school_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          location?: string
+          school_name?: string
+          school_type?: string
+        }
+        Relationships: []
+      }
       schools: {
         Row: {
           address: string | null
@@ -262,6 +286,7 @@ export type Database = {
           interests: string[] | null
           last_name: string
           personality_type: string | null
+          school_id: string | null
           skills: string[] | null
           test_completed: boolean | null
           updated_at: string
@@ -276,6 +301,7 @@ export type Database = {
           interests?: string[] | null
           last_name: string
           personality_type?: string | null
+          school_id?: string | null
           skills?: string[] | null
           test_completed?: boolean | null
           updated_at?: string
@@ -290,12 +316,21 @@ export type Database = {
           interests?: string[] | null
           last_name?: string
           personality_type?: string | null
+          school_id?: string | null
           skills?: string[] | null
           test_completed?: boolean | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "students_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "school_options"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

@@ -43,6 +43,13 @@ export const Header = () => {
             
             {user ? (
               <div className="flex items-center space-x-4">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/dashboard')}
+                  className="text-sm"
+                >
+                  Dashboard
+                </Button>
                 <span className="text-sm text-muted-foreground">
                   {userRole && (
                     <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium mr-2">
@@ -94,6 +101,13 @@ export const Header = () => {
               
               {user ? (
                 <div className="flex flex-col space-y-3 pt-3 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/dashboard')}
+                    className="justify-start text-sm"
+                  >
+                    Dashboard
+                  </Button>
                   <div className="text-sm text-muted-foreground">
                     {userRole && (
                       <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium mr-2">

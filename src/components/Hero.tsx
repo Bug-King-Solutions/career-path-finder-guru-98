@@ -29,8 +29,13 @@ export const Hero = () => {
               Professional psychology-based career guidance for teenagers and university students in Nigeria.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Button variant="hero" size="lg" className="text-lg px-8 py-4">
-                Get Career Guidance
+              <Button 
+                variant="hero" 
+                size="lg" 
+                className="text-lg px-8 py-4"
+                onClick={() => navigate('/auth')}
+              >
+                Start Your Journey - Sign Up
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <Button 
@@ -39,7 +44,7 @@ export const Hero = () => {
                 className="text-lg px-8 py-4 bg-white/10 border-white/30 text-white hover:bg-white hover:text-primary"
                 onClick={() => navigate('/psychology-test')}
               >
-                Take Psychology Test
+                Try Psychology Test First
               </Button>
             </div>
             

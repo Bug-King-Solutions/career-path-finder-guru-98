@@ -15,7 +15,11 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<"user" | "admin">("user");
+  const [userRole, setUserRole] = useState<string>('student');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [schoolName, setSchoolName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -26,7 +30,7 @@ export default function AuthPage() {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/");
+        navigate("/dashboard");
       }
     };
     checkUser();
@@ -50,7 +54,7 @@ export default function AuthPage() {
           title: "Welcome back!",
           description: "You have been successfully signed in.",
         });
-        navigate("/");
+        navigate("/dashboard");
       }
     } catch (err) {
       setError("An unexpected error occurred");
@@ -77,41 +81,88 @@ export default function AuthPage() {
     }
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/dashboard`;
       
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            role: role
+            role: userRole,
+            first_name: firstName,
+            last_name: lastName,
+            school_name: schoolName,
+            contact_email: contactEmail || email,
           }
         }
       });
 
-      if (error) {
-        setError(error.message);
-      } else if (data.user) {
-        // Insert role into user_roles table
+      if (signUpError) {
+        setError(signUpError.message);
+        toast({
+          title: 'Sign Up Failed',
+          description: signUpError.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (data.user) {
+        // Insert user role
         const { error: roleError } = await supabase
           .from('user_roles')
-          .insert([
-            { user_id: data.user.id, role: role }
-          ]);
+          .insert({
+            user_id: data.user.id,
+            role: userRole as any
+          });
 
         if (roleError) {
-          console.error('Error adding user role:', roleError);
+          console.error('Error inserting user role:', roleError);
+        }
+
+        // Insert profile data based on role
+        if (userRole === 'student') {
+          const { error: studentError } = await supabase
+            .from('students')
+            .insert({
+              user_id: data.user.id,
+              first_name: firstName,
+              last_name: lastName,
+              email: email
+            });
+
+          if (studentError) {
+            console.error('Error creating student profile:', studentError);
+          }
+        } else if (userRole === 'school') {
+          const { error: schoolError } = await supabase
+            .from('schools')
+            .insert({
+              user_id: data.user.id,
+              school_name: schoolName,
+              contact_email: contactEmail || email
+            });
+
+          if (schoolError) {
+            console.error('Error creating school profile:', schoolError);
+          }
         }
 
         toast({
-          title: "Account created!",
-          description: "Please check your email to verify your account.",
+          title: 'Account Created!',
+          description: 'Please check your email to verify your account.',
         });
-        
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
+
+        // Clear form
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setFirstName('');
+        setLastName('');
+        setSchoolName('');
+        setContactEmail('');
+        setUserRole('student');
       }
     } catch (err) {
       setError("An unexpected error occurred");
@@ -226,17 +277,67 @@ export default function AuthPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="role">Account Type</Label>
-                    <Select value={role} onValueChange={(value: "user" | "admin") => setRole(value)}>
+                    <Label htmlFor="account-type">Account Type</Label>
+                    <Select value={userRole} onValueChange={setUserRole}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select account type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="user">User</SelectItem>
-                        <SelectItem value="admin">Administrator</SelectItem>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="school">School</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {userRole === 'student' && (
+                    <>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="first-name">First Name</Label>
+                          <Input
+                            id="first-name"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="last-name">Last Name</Label>
+                          <Input
+                            id="last-name"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {userRole === 'school' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="school-name">School Name</Label>
+                        <Input
+                          id="school-name"
+                          value={schoolName}
+                          onChange={(e) => setSchoolName(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="contact-email">Contact Email</Label>
+                        <Input
+                          id="contact-email"
+                          type="email"
+                          value={contactEmail}
+                          onChange={(e) => setContactEmail(e.target.value)}
+                          placeholder="Leave empty to use account email"
+                        />
+                      </div>
+                    </>
+                  )}
                   
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Creating Account..." : "Create Account"}

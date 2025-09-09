@@ -3,8 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Brain, ArrowRight, RotateCcw } from "lucide-react";
+import { Brain, ArrowRight, RotateCcw, School } from "lucide-react";
 import { toast } from "sonner";
+import { UniversityRecommendations } from "./UniversityRecommendations";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Question {
   id: number;
@@ -82,10 +85,13 @@ const questions: Question[] = [
 ];
 
 export const PsychologyTest = () => {
+  const { user } = useAuth();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [testStarted, setTestStarted] = useState(false);
+  const [showUniversities, setShowUniversities] = useState(false);
+  const [testResults, setTestResults] = useState<any>(null);
 
   const handleAnswer = (answerIndex: number) => {
     const newAnswers = [...answers, answerIndex];
@@ -98,7 +104,7 @@ export const PsychologyTest = () => {
     }
   };
 
-  const calculateResults = (finalAnswers: number[]) => {
+  const calculateResults = async (finalAnswers: number[]) => {
     const scores = {
       analytical: 0,
       creative: 0,
@@ -131,6 +137,49 @@ export const PsychologyTest = () => {
       scores[a[0] as keyof typeof scores] > scores[b[0] as keyof typeof scores] ? a : b
     )[0];
 
+    const recommendations = getRecommendations(primaryType);
+    const results = {
+      scores,
+      primaryType,
+      recommendations
+    };
+
+    setTestResults(results);
+
+    // Save to database
+    if (user) {
+      try {
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (studentData) {
+          await supabase
+            .from('student_test_results')
+            .insert({
+              student_id: studentData.id,
+              test_type: 'psychology',
+              personality_type: primaryType,
+              scores: scores,
+              recommendations: recommendations
+            });
+
+          // Update student's personality type
+          await supabase
+            .from('students')
+            .update({ 
+              personality_type: primaryType,
+              test_completed: true 
+            })
+            .eq('id', studentData.id);
+        }
+      } catch (error) {
+        console.error('Error saving test results:', error);
+      }
+    }
+
     setShowResults(true);
     toast.success("Psychology test completed! Check your results below.");
   };
@@ -140,6 +189,8 @@ export const PsychologyTest = () => {
     setAnswers([]);
     setShowResults(false);
     setTestStarted(false);
+    setShowUniversities(false);
+    setTestResults(null);
   };
 
   const startTest = () => {
@@ -187,6 +238,36 @@ export const PsychologyTest = () => {
     };
     return recommendations[type as keyof typeof recommendations] || [];
   };
+
+  const handleUniversityExploration = (universityId: string) => {
+    // Progress tracking is handled in UniversityRecommendations component
+  };
+
+  if (showUniversities && testResults) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl">University Recommendations</CardTitle>
+              <Button variant="outline" onClick={() => setShowUniversities(false)}>
+                Back to Results
+              </Button>
+            </div>
+            <p className="text-muted-foreground">
+              Explore universities that offer programs in your recommended career paths
+            </p>
+          </CardHeader>
+          <CardContent>
+            <UniversityRecommendations 
+              selectedCareers={testResults.recommendations}
+              onExploreUniversity={handleUniversityExploration}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!testStarted) {
     return (
@@ -283,10 +364,16 @@ export const PsychologyTest = () => {
               </div>
             </div>
 
-            <Button onClick={resetTest} variant="outline" className="w-full">
-              <RotateCcw className="mr-2 w-4 h-4" />
-              Take Test Again
-            </Button>
+            <div className="flex gap-4">
+              <Button onClick={() => setShowUniversities(true)} className="flex-1">
+                <School className="mr-2 w-4 h-4" />
+                Explore Universities
+              </Button>
+              <Button onClick={resetTest} variant="outline" className="flex-1">
+                <RotateCcw className="mr-2 w-4 h-4" />
+                Take Test Again
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

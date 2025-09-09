@@ -3,17 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, TrendingUp, Users, Target } from 'lucide-react';
+import { BookOpen, TrendingUp, Users, Target, Brain, Briefcase, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { PsychologyTest } from '@/components/PsychologyTest';
+import { CareerAssessment } from '@/components/CareerAssessment';
+import { SkillsAssessment } from '@/components/SkillsAssessment';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
   const [student, setStudent] = useState<any>(null);
   const [testResults, setTestResults] = useState<any[]>([]);
   const [progress, setProgress] = useState<any[]>([]);
-  const [showTest, setShowTest] = useState(false);
+  const [activeAssessment, setActiveAssessment] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,18 +73,20 @@ const StudentDashboard = () => {
     );
   }
 
-  if (showTest) {
+  if (activeAssessment) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <Button 
             variant="outline" 
-            onClick={() => setShowTest(false)}
+            onClick={() => setActiveAssessment(null)}
             className="mb-4"
           >
             Back to Dashboard
           </Button>
-          <PsychologyTest />
+          {activeAssessment === 'psychology' && <PsychologyTest />}
+          {activeAssessment === 'career' && <CareerAssessment />}
+          {activeAssessment === 'skills' && <SkillsAssessment />}
         </div>
       </div>
     );
@@ -157,69 +162,128 @@ const StudentDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Personality Assessment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {testResults.length > 0 ? (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Latest Result:</span>
-                    <Badge variant="secondary">{testResults[0].personality_type}</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Completed on {new Date(testResults[0].completed_at).toLocaleDateString()}
-                  </p>
-                  <Button onClick={() => setShowTest(true)} variant="outline" className="w-full">
-                    Take Test Again
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">
-                    Take your first personality assessment to discover career paths that match your interests and skills.
-                  </p>
-                  <Button onClick={() => setShowTest(true)} className="w-full">
-                    Start Personality Test
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="assessments" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="assessments">Assessments</TabsTrigger>
+            <TabsTrigger value="progress">Progress</TabsTrigger>
+          </TabsList>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Career Exploration Progress</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {progress.length > 0 ? (
-                progress.map((item, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{item.course_field}</span>
-                      <span className="text-sm text-muted-foreground">{item.progress_percentage}%</span>
+          <TabsContent value="assessments" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Brain className="w-8 h-8 text-primary" />
+                    <div>
+                      <CardTitle className="text-lg">Psychology Assessment</CardTitle>
+                      <p className="text-sm text-muted-foreground">Discover your personality</p>
                     </div>
-                    <Progress value={item.progress_percentage} className="h-2" />
-                    <p className="text-xs text-muted-foreground">
-                      {item.universities_explored?.length || 0} universities explored
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {testResults.length > 0 ? (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Latest Result:</span>
+                        <Badge variant="secondary">{testResults[0].personality_type}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Completed on {new Date(testResults[0].completed_at).toLocaleDateString()}
+                      </p>
+                      <Button onClick={() => setActiveAssessment('psychology')} variant="outline" className="w-full">
+                        Take Test Again
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-muted-foreground mb-4 text-sm">
+                        Discover career paths that match your personality
+                      </p>
+                      <Button onClick={() => setActiveAssessment('psychology')} className="w-full">
+                        Start Assessment
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Briefcase className="w-8 h-8 text-primary" />
+                    <div>
+                      <CardTitle className="text-lg">Career Interest</CardTitle>
+                      <p className="text-sm text-muted-foreground">Explore career fields</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground mb-4 text-sm">
+                      Identify which career fields interest you most
+                    </p>
+                    <Button onClick={() => setActiveAssessment('career')} className="w-full">
+                      Start Assessment
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Zap className="w-8 h-8 text-primary" />
+                    <div>
+                      <CardTitle className="text-lg">Skills Assessment</CardTitle>
+                      <p className="text-sm text-muted-foreground">Evaluate your abilities</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground mb-4 text-sm">
+                      Assess your current skills and identify growth areas
+                    </p>
+                    <Button onClick={() => setActiveAssessment('skills')} className="w-full">
+                      Start Assessment
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="progress" className="space-y-6">
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Career Exploration Progress</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {progress.length > 0 ? (
+                  progress.map((item, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{item.course_field}</span>
+                        <span className="text-sm text-muted-foreground">{item.progress_percentage}%</span>
+                      </div>
+                      <Progress value={item.progress_percentage} className="h-2" />
+                      <p className="text-xs text-muted-foreground">
+                        {item.universities_explored?.length || 0} universities explored
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">
+                      Complete assessments to start tracking your exploration progress.
                     </p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">
-                    Start exploring career fields and universities to track your progress.
-                  </p>
-                  <Button variant="outline" disabled>
-                    Coming Soon: Field Explorer
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {testResults.length > 0 && (
           <Card className="mt-6">

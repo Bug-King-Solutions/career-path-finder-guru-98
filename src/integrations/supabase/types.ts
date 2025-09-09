@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          booking_date: string | null
+          booking_type: string
+          created_at: string
+          id: string
+          notes: string | null
+          school_id: string | null
+          status: string | null
+          student_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_date?: string | null
+          booking_type: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          school_id?: string | null
+          status?: string | null
+          student_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_date?: string | null
+          booking_type?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          school_id?: string | null
+          status?: string | null
+          student_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bug_kings: {
         Row: {
           achievements: string[] | null
@@ -89,6 +140,160 @@ export type Database = {
           name?: string
           project_type?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      schools: {
+        Row: {
+          address: string | null
+          contact_email: string
+          created_at: string
+          id: string
+          phone: string | null
+          school_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          contact_email: string
+          created_at?: string
+          id?: string
+          phone?: string | null
+          school_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          contact_email?: string
+          created_at?: string
+          id?: string
+          phone?: string | null
+          school_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      student_progress: {
+        Row: {
+          course_field: string
+          created_at: string
+          id: string
+          progress_percentage: number | null
+          student_id: string
+          universities_explored: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          course_field: string
+          created_at?: string
+          id?: string
+          progress_percentage?: number | null
+          student_id: string
+          universities_explored?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          course_field?: string
+          created_at?: string
+          id?: string
+          progress_percentage?: number | null
+          student_id?: string
+          universities_explored?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_progress_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_test_results: {
+        Row: {
+          completed_at: string
+          id: string
+          personality_type: string | null
+          recommendations: string[] | null
+          scores: Json | null
+          student_id: string
+          test_type: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          personality_type?: string | null
+          recommendations?: string[] | null
+          scores?: Json | null
+          student_id: string
+          test_type: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          personality_type?: string | null
+          recommendations?: string[] | null
+          scores?: Json | null
+          student_id?: string
+          test_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_test_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          created_at: string
+          education_level: string | null
+          email: string
+          first_name: string
+          id: string
+          interests: string[] | null
+          last_name: string
+          personality_type: string | null
+          skills: string[] | null
+          test_completed: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          education_level?: string | null
+          email: string
+          first_name: string
+          id?: string
+          interests?: string[] | null
+          last_name: string
+          personality_type?: string | null
+          skills?: string[] | null
+          test_completed?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          education_level?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          interests?: string[] | null
+          last_name?: string
+          personality_type?: string | null
+          skills?: string[] | null
+          test_completed?: boolean | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

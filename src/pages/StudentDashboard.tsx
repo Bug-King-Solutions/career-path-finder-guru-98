@@ -10,6 +10,7 @@ import { PsychologyTest } from '@/components/PsychologyTest';
 import { CareerAssessment } from '@/components/CareerAssessment';
 import { SkillsAssessment } from '@/components/SkillsAssessment';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DashboardHeader } from '@/components/DashboardHeader';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
@@ -94,13 +95,15 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <DashboardHeader studentName={student ? `${student.first_name} ${student.last_name}` : undefined} />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            Welcome, {student?.first_name} {student?.last_name}
-          </h1>
+          <h2 className="text-2xl font-bold text-foreground">
+            Welcome back, {student?.first_name}!
+          </h2>
           <p className="text-muted-foreground mt-2">
-            Track your personality assessments and career exploration progress
+            Continue your personality assessments and career exploration journey
           </p>
         </div>
 

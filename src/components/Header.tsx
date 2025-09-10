@@ -40,6 +40,7 @@ export const Header = () => {
             <a href="#home" className="text-foreground hover:text-primary transition-colors">Home</a>
             <a href="#about" className="text-foreground hover:text-primary transition-colors">About</a>
             <a href="#services" className="text-foreground hover:text-primary transition-colors">Services</a>
+            <a href="#mobile-app" className="text-foreground hover:text-primary transition-colors">Mobile App</a>
             <button 
               onClick={() => navigate('/auth')} 
               className="text-foreground hover:text-primary transition-colors"
@@ -103,6 +104,7 @@ export const Header = () => {
               <a href="#home" className="text-foreground hover:text-primary transition-colors">Home</a>
               <a href="#about" className="text-foreground hover:text-primary transition-colors">About</a>
               <a href="#services" className="text-foreground hover:text-primary transition-colors">Services</a>
+              <a href="#mobile-app" className="text-foreground hover:text-primary transition-colors">Mobile App</a>
               <button 
                 onClick={() => {
                   navigate('/auth');

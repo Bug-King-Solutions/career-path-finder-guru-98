@@ -26,16 +26,16 @@ export const Hero = () => {
               <span className="text-accent-light"> Perfect Career Path</span>
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-white/90 leading-relaxed">
-              Professional psychology-based career guidance for teenagers and university students in Nigeria.
+              Expert psychology-based career guidance, comprehensive assessments, and personalized university recommendations for Nigerian students.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
               <Button 
                 variant="hero" 
                 size="lg" 
                 className="text-lg px-8 py-4"
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/career-guru')}
               >
-                Start Your Journey - Sign Up
+                Explore Career Guru
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <Button 
@@ -44,7 +44,7 @@ export const Hero = () => {
                 className="text-lg px-8 py-4 bg-white/10 border-white/30 text-white hover:bg-white hover:text-primary"
                 onClick={() => navigate('/psychology-test')}
               >
-                Try Psychology Test First
+                Try Psychology Test
               </Button>
             </div>
             

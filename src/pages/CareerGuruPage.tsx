@@ -1,12 +1,70 @@
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Target, Users, Lightbulb, ArrowRight, Star, CheckCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Brain, Target, Users, Lightbulb, ArrowRight, Star, CheckCircle, BookOpen, MapPin, GraduationCap } from "lucide-react";
+import { UniversityFinder } from "@/components/UniversityFinder";
+import { CareerMatcher } from "@/components/CareerMatcher";
+import { useNavigate, Link } from "react-router-dom";
 
 const CareerGuruPage = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("overview");
+
+  const features = [
+    {
+      id: "psychology",
+      icon: Brain,
+      title: "Psychology Assessment",
+      description: "Take scientifically-backed tests to discover your personality type and natural strengths",
+      badge: "5 min test",
+      color: "text-primary"
+    },
+    {
+      id: "career",
+      icon: Target,
+      title: "Career Matching",
+      description: "Get personalized career recommendations based on your profile and interests",
+      badge: "AI-powered",
+      color: "text-secondary"
+    },
+    {
+      id: "university",
+      icon: MapPin,
+      title: "University Finder",
+      description: "Find the perfect Nigerian universities that match your career goals and preferences",
+      badge: "100+ universities",
+      color: "text-primary"
+    },
+    {
+      id: "guidance",
+      icon: BookOpen,
+      title: "Expert Guidance",
+      description: "Access professional advice and resources from experienced career counselors",
+      badge: "Coming Soon",
+      color: "text-secondary"
+    }
+  ];
+
+  const benefits = [
+    "Scientifically validated psychology assessments",
+    "Comprehensive Nigerian university database",
+    "AI-powered career matching algorithm",
+    "Personalized recommendations and reports",
+    "Expert guidance from Mr. Paul Olayiwola",
+    "Real-time university information and requirements",
+    "Career development resources and tools",
+    "Progress tracking and detailed analytics"
+  ];
+
+  const stats = [
+    { number: "2,000+", label: "Students Guided" },
+    { number: "150+", label: "Universities Listed" },
+    { number: "50+", label: "Career Paths" },
+    { number: "98%", label: "Success Rate" }
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -37,10 +95,11 @@ const CareerGuruPage = () => {
               </Button>
               <Button 
                 size="lg" 
+                onClick={() => navigate('/psychology-test')}
                 variant="outline" 
                 className="border-white text-white hover:bg-white hover:text-primary text-lg px-8 py-3"
               >
-                Watch Demo
+                Try Psychology Test
               </Button>
             </div>
           </div>
@@ -52,127 +111,187 @@ const CareerGuruPage = () => {
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/20 rounded-full blur-3xl"></div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-background">
+      {/* Main Career Guidance System */}
+      <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-foreground mb-4">
-              Why Choose Career Guru?
+            <Badge variant="secondary" className="text-lg px-4 py-2 mb-4">
+              <Star className="w-5 h-5 mr-2" />
+              Now Available
+            </Badge>
+            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
+              <span className="text-primary">Career Guidance</span> Web Platform
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Our comprehensive platform combines cutting-edge psychology with AI technology 
-              to provide personalized career guidance that actually works.
+              Discover your perfect career path with our comprehensive web-based guidance system. 
+              Take psychology tests, explore careers, and find the best universities - all in one place.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <Card className="text-center group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2">
-              <CardHeader>
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
-                  <Brain className="w-8 h-8 text-primary" />
-                </div>
-                <CardTitle className="text-xl">Psychology-Based</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Scientifically validated personality assessments and cognitive evaluations
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2">
-              <CardHeader>
-                <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-secondary/20 transition-colors">
-                  <Target className="w-8 h-8 text-secondary" />
-                </div>
-                <CardTitle className="text-xl">AI-Powered</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Advanced algorithms analyze your results to provide precise career matches
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2">
-              <CardHeader>
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
-                  <Users className="w-8 h-8 text-primary" />
-                </div>
-                <CardTitle className="text-xl">University Finder</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Discover the best universities and programs that align with your career goals
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2">
-              <CardHeader>
-                <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-secondary/20 transition-colors">
-                  <Lightbulb className="w-8 h-8 text-secondary" />
-                </div>
-                <CardTitle className="text-xl">Personalized</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Tailored recommendations based on your unique personality and interests
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-20 bg-gradient-to-br from-accent-light to-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-foreground mb-4">
-              How Career Guru Works
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Your journey to career clarity in three simple steps
-            </p>
-          </div>
-
-          <div className="max-w-5xl mx-auto">
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-6 shadow-glow">
-                  <span className="text-2xl font-bold text-white">1</span>
-                </div>
-                <h3 className="text-xl font-bold mb-4">Take Assessments</h3>
-                <p className="text-muted-foreground">
-                  Complete our comprehensive psychology tests and personality assessments 
-                  designed by career experts.
-                </p>
-              </div>
-
-              <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-secondary rounded-full flex items-center justify-center mx-auto mb-6 shadow-glow">
-                  <span className="text-2xl font-bold text-white">2</span>
-                </div>
-                <h3 className="text-xl font-bold mb-4">Get AI Analysis</h3>
-                <p className="text-muted-foreground">
-                  Our AI analyzes your results and matches you with careers that 
-                  align with your personality and skills.
-                </p>
-              </div>
-
-              <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-tertiary rounded-full flex items-center justify-center mx-auto mb-6 shadow-glow">
-                  <span className="text-2xl font-bold text-white">3</span>
-                </div>
-                <h3 className="text-xl font-bold mb-4">Explore Paths</h3>
-                <p className="text-muted-foreground">
-                  Discover career opportunities, university programs, and 
-                  create your personalized roadmap to success.
-                </p>
-              </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+            <div className="flex justify-center">
+              <TabsList className="grid grid-cols-1 md:grid-cols-3 w-full max-w-2xl">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="career">Career Match</TabsTrigger>
+                <TabsTrigger value="university">Universities</TabsTrigger>
+              </TabsList>
             </div>
-          </div>
+
+            <TabsContent value="overview" className="space-y-12">
+              {/* Stats Section */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {stats.map((stat, index) => (
+                  <Card key={index} className="text-center shadow-card">
+                    <CardContent className="pt-6">
+                      <div className="text-2xl md:text-3xl font-bold text-primary mb-2">
+                        {stat.number}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{stat.label}</div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Features Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {features.map((feature, index) => (
+                  <Card 
+                    key={index} 
+                    className="shadow-card hover:shadow-elegant transition-all duration-300 cursor-pointer"
+                  >
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-3 rounded-xl bg-muted ${feature.color}`}>
+                            <feature.icon className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">{feature.title}</CardTitle>
+                            <Badge variant="outline" className="mt-1 text-xs">
+                              {feature.badge}
+                            </Badge>
+                          </div>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground mb-4">{feature.description}</p>
+                      {feature.id === 'psychology' ? (
+                        <Link to="/psychology-test">
+                          <Button className="w-full">Take Test</Button>
+                        </Link>
+                      ) : (
+                        <Button 
+                          onClick={() => setActiveTab(feature.id)} 
+                          className="w-full"
+                          disabled={feature.id === 'guidance'}
+                        >
+                          {feature.id === 'guidance' ? 'Coming Soon' : 'Explore'}
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Benefits Section */}
+              <div className="bg-card rounded-2xl p-8 md:p-12 shadow-card">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                  <div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
+                      Why Use Our Career Guidance System?
+                    </h3>
+                    <p className="text-lg text-muted-foreground mb-8">
+                      Our platform combines scientific psychology assessments with comprehensive 
+                      career data to provide personalized guidance tailored specifically for 
+                      Nigerian students and the local job market.
+                    </p>
+                    
+                    <div className="space-y-4">
+                      {benefits.map((benefit, index) => (
+                        <div key={index} className="flex items-start space-x-3">
+                          <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-muted-foreground">{benefit}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <Card className="bg-gradient-primary text-white border-0">
+                      <CardHeader>
+                        <CardTitle className="text-white">Get Started Today</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-white/90 mb-4">
+                          Begin your career discovery journey with our comprehensive assessment tools.
+                        </p>
+                        <div className="space-y-3">
+                          <Link to="/psychology-test">
+                            <Button 
+                              variant="secondary" 
+                              className="w-full bg-white text-primary hover:bg-white/90"
+                            >
+                              <Brain className="mr-2 w-4 h-4" />
+                              Start Psychology Test
+                            </Button>
+                          </Link>
+                          <Button 
+                            variant="outline" 
+                            className="w-full border-white text-white hover:bg-white hover:text-primary"
+                            onClick={() => setActiveTab("career")}
+                          >
+                            <Target className="mr-2 w-4 h-4" />
+                            Find Career Match
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="shadow-card">
+                      <CardHeader>
+                        <CardTitle>Process Overview</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                            <div>
+                              <div className="font-semibold">Take Assessment</div>
+                              <div className="text-sm text-muted-foreground">Complete psychology and skills tests</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-secondary text-secondary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                            <div>
+                              <div className="font-semibold">Get Matches</div>
+                              <div className="text-sm text-muted-foreground">Receive personalized career recommendations</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-tertiary text-tertiary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                            <div>
+                              <div className="font-semibold">Find Universities</div>
+                              <div className="text-sm text-muted-foreground">Explore relevant academic programs</div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="career">
+              <CareerMatcher />
+            </TabsContent>
+
+            <TabsContent value="university">
+              <UniversityFinder />
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
 

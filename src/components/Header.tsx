@@ -40,9 +40,9 @@ export const Header = () => {
             <a href="#home" className="text-foreground hover:text-primary transition-colors">Home</a>
             <a href="#about" className="text-foreground hover:text-primary transition-colors">About</a>
             <a href="#services" className="text-foreground hover:text-primary transition-colors">Services</a>
-            <a href="#mobile-app" className="text-foreground hover:text-primary transition-colors">Mobile App</a>
+            <a href="#products" className="text-foreground hover:text-primary transition-colors">Products</a>
             <button 
-              onClick={() => navigate('/career-guru')} 
+              onClick={() => navigate('/')} 
               className="text-foreground hover:text-primary transition-colors"
             >
               Career Guru
@@ -104,10 +104,10 @@ export const Header = () => {
               <a href="#home" className="text-foreground hover:text-primary transition-colors">Home</a>
               <a href="#about" className="text-foreground hover:text-primary transition-colors">About</a>
               <a href="#services" className="text-foreground hover:text-primary transition-colors">Services</a>
-              <a href="#mobile-app" className="text-foreground hover:text-primary transition-colors">Mobile App</a>
+              <a href="#products" className="text-foreground hover:text-primary transition-colors">Products</a>
               <button 
                 onClick={() => {
-                  navigate('/career-guru');
+                  navigate('/');
                   setIsMenuOpen(false);
                 }} 
                 className="text-foreground hover:text-primary transition-colors text-left"

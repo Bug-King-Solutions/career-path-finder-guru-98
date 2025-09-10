@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Smartphone, Brain, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { WaitlistForm } from "@/components/WaitlistForm";
 import careerGuruMockup from "@/assets/career-guru-mockup.jpg";
 
 export const Products = () => {
@@ -82,9 +83,11 @@ export const Products = () => {
               <p className="text-muted-foreground mb-4">
                 Get ready for the ultimate career guidance experience on your mobile device. Sign up to be notified when it launches!
               </p>
-              <Button variant="outline" size="sm">
-                Notify Me
-              </Button>
+              <WaitlistForm>
+                <Button variant="outline" size="sm">
+                  Notify Me
+                </Button>
+              </WaitlistForm>
             </div>
           </div>
 

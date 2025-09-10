@@ -353,6 +353,7 @@ export type Database = {
           personality_type: string | null
           school_id: string | null
           skills: string[] | null
+          student_number: string | null
           test_completed: boolean | null
           updated_at: string
           user_id: string
@@ -368,6 +369,7 @@ export type Database = {
           personality_type?: string | null
           school_id?: string | null
           skills?: string[] | null
+          student_number?: string | null
           test_completed?: boolean | null
           updated_at?: string
           user_id: string
@@ -383,6 +385,7 @@ export type Database = {
           personality_type?: string | null
           school_id?: string | null
           skills?: string[] | null
+          student_number?: string | null
           test_completed?: boolean | null
           updated_at?: string
           user_id?: string

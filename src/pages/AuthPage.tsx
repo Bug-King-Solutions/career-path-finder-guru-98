@@ -27,6 +27,7 @@ export default function AuthPage() {
   const [schoolName, setSchoolName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
+  const [studentNumber, setStudentNumber] = useState('');
   const [schoolOptions, setSchoolOptions] = useState<SchoolOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -41,16 +42,35 @@ export default function AuthPage() {
         navigate("/dashboard");
       }
 
-      // Fetch school options for student signup
-      const { data: schools, error } = await supabase
-        .from('school_options')
-        .select('id, school_name, school_type')
-        .order('school_type', { ascending: true })
-        .order('school_name', { ascending: true });
+      // Fetch school options for student signup (both pre-defined and user-created schools)
+      const [schoolOptionsData, createdSchoolsData] = await Promise.all([
+        supabase
+          .from('school_options')
+          .select('id, school_name, school_type')
+          .order('school_type', { ascending: true })
+          .order('school_name', { ascending: true }),
+        supabase
+          .from('schools')
+          .select('id, school_name')
+          .order('school_name', { ascending: true })
+      ]);
 
-      if (!error && schools) {
-        setSchoolOptions(schools);
+      const combinedSchools: SchoolOption[] = [];
+      
+      if (!schoolOptionsData.error && schoolOptionsData.data) {
+        combinedSchools.push(...schoolOptionsData.data);
       }
+      
+      if (!createdSchoolsData.error && createdSchoolsData.data) {
+        const formattedCreatedSchools = createdSchoolsData.data.map(school => ({
+          id: school.id,
+          school_name: school.school_name,
+          school_type: 'registered'
+        }));
+        combinedSchools.push(...formattedCreatedSchools);
+      }
+      
+      setSchoolOptions(combinedSchools);
     };
     initialize();
   }, [navigate]);
@@ -113,6 +133,7 @@ export default function AuthPage() {
             last_name: lastName,
             school_name: schoolName,
             contact_email: contactEmail || email,
+            student_number: studentNumber,
           }
         }
       });
@@ -149,7 +170,8 @@ export default function AuthPage() {
               first_name: firstName,
               last_name: lastName,
               email: email,
-              school_id: selectedSchoolId || null
+              school_id: selectedSchoolId || null,
+              student_number: studentNumber || null
             });
 
           if (studentError) {
@@ -183,6 +205,7 @@ export default function AuthPage() {
         setSchoolName('');
         setContactEmail('');
         setSelectedSchoolId('');
+        setStudentNumber('');
         setUserRole('student');
       }
     } catch (err) {
@@ -343,12 +366,28 @@ export default function AuthPage() {
                           <SelectContent>
                             {schoolOptions.map((school) => (
                               <SelectItem key={school.id} value={school.id}>
-                                {school.school_name} ({school.school_type === 'secondary' ? 'Secondary School' : 'University'})
+                                {school.school_name} ({
+                                  school.school_type === 'secondary' ? 'Secondary School' : 
+                                  school.school_type === 'university' ? 'University' :
+                                  'Registered School'
+                                })
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
+                      
+                      {selectedSchoolId && (
+                        <div className="space-y-2">
+                          <Label htmlFor="student-number">Student ID/Number (Optional)</Label>
+                          <Input
+                            id="student-number"
+                            value={studentNumber}
+                            onChange={(e) => setStudentNumber(e.target.value)}
+                            placeholder="Enter your student ID or number"
+                          />
+                        </div>
+                      )}
                     </>
                   )}
 

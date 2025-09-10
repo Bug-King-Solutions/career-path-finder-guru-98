@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { SchoolEvaluationQuestions } from '@/components/SchoolEvaluationQuestions';
 import { StudentAnswersView } from '@/components/StudentAnswersView';
+import { StudentManagement } from '@/components/StudentManagement';
 
 const SchoolDashboard = () => {
   const { user } = useAuth();
@@ -95,9 +96,10 @@ const SchoolDashboard = () => {
       <DashboardHeader studentName={school?.school_name} />
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="students">Students</TabsTrigger>
+            <TabsTrigger value="manage">Manage Students</TabsTrigger>
             <TabsTrigger value="questions">Custom Questions</TabsTrigger>
             <TabsTrigger value="answers">Student Answers</TabsTrigger>
           </TabsList>
@@ -279,6 +281,16 @@ const SchoolDashboard = () => {
 
           <TabsContent value="questions" className="mt-6">
             {school && <SchoolEvaluationQuestions schoolId={school.id} />}
+          </TabsContent>
+
+          <TabsContent value="manage" className="mt-6">
+            {school && (
+              <StudentManagement 
+                schoolId={school.id} 
+                students={students} 
+                onStudentUpdate={fetchSchoolData}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="answers" className="mt-6">

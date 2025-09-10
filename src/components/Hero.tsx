@@ -9,7 +9,6 @@ export const Hero = () => {
 
   return (
     <section id="home" className="relative py-20 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-hero opacity-90"></div>
       <div className="absolute inset-0">
         <img 
           src={heroImage} 
@@ -17,6 +16,7 @@ export const Hero = () => {
           className="w-full h-full object-cover"
         />
       </div>
+      <div className="absolute inset-0 bg-gradient-hero opacity-90"></div>
       
       <div className="relative container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Header } from "@/components/Header";
+import { CareerGuruHeader } from "@/components/CareerGuruHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,47 +68,62 @@ const CareerGuruPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <CareerGuruHeader />
       
       {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-hero overflow-hidden">
+      <section className="relative py-32 bg-gradient-hero overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/70 to-secondary/80"></div>
+        <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/20 rounded-full blur-3xl"></div>
+        
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center text-white">
-            <Badge className="mb-6 bg-white/20 text-white border-white/30">
-              AI-Powered Career Discovery
-            </Badge>
-            <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              Career Guru
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-3xl mx-auto">
-              Discover your perfect career path with advanced psychology assessments, 
-              AI-powered recommendations, and personalized university guidance.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                onClick={() => navigate('/auth')}
-                className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-3"
-              >
-                Start Your Journey
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-              <Button 
-                size="lg" 
-                onClick={() => navigate('/psychology-test')}
-                variant="outline" 
-                className="border-white text-white hover:bg-white hover:text-primary text-lg px-8 py-3"
-              >
-                Try Psychology Test
-              </Button>
+          <div className="max-w-5xl mx-auto text-center text-white">
+            <div className="animate-fade-in">
+              <Badge className="mb-8 bg-white/20 text-white border-white/30 text-lg px-6 py-2">
+                🚀 AI-Powered Career Discovery
+              </Badge>
+              <h1 className="text-6xl md:text-7xl font-bold mb-8 bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                Career Guru
+              </h1>
+              <p className="text-2xl md:text-3xl mb-12 text-white/90 max-w-4xl mx-auto leading-relaxed">
+                Discover your <span className="text-accent-light font-semibold">perfect career path</span> with advanced psychology assessments, 
+                AI-powered recommendations, and personalized university guidance.
+              </p>
+              
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 max-w-4xl mx-auto">
+                {stats.map((stat, index) => (
+                  <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <div className="text-3xl md:text-4xl font-bold text-accent-light mb-2">
+                      {stat.number}
+                    </div>
+                    <div className="text-sm text-white/80">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                <Button 
+                  size="lg" 
+                  onClick={() => navigate('/auth')}
+                  className="bg-white text-primary hover:bg-white/90 text-xl px-10 py-4 h-auto font-semibold shadow-xl hover:shadow-2xl transition-all duration-300"
+                >
+                  Start Your Journey
+                  <ArrowRight className="w-6 h-6 ml-3" />
+                </Button>
+                <Button 
+                  size="lg" 
+                  onClick={() => navigate('/psychology-test')}
+                  variant="outline" 
+                  className="border-white/30 bg-white/10 text-white hover:bg-white hover:text-primary text-xl px-10 py-4 h-auto font-semibold backdrop-blur-sm"
+                >
+                  <Brain className="w-6 h-6 mr-3" />
+                  Try Psychology Test
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-        
-        {/* Background Elements */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20"></div>
-        <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/20 rounded-full blur-3xl"></div>
       </section>
 
       {/* Main Career Guidance System */}

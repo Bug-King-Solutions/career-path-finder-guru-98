@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import PsychologyTestPage from "./pages/PsychologyTestPage";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
+import CareerGuruPage from "./pages/CareerGuruPage";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/career-guru" element={<CareerGuruPage />} />
             <Route path="/psychology-test" element={<PsychologyTestPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />

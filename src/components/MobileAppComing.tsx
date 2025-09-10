@@ -196,7 +196,7 @@ export const MobileAppComing = () => {
           <p className="text-muted-foreground mb-4">
             Meanwhile, explore Career Guru on the web
           </p>
-          <Button size="lg" className="bg-primary hover:bg-primary/90">
+          <Button size="lg" onClick={() => window.location.href = '/career-guru'} className="bg-primary hover:bg-primary/90">
             <Download className="w-5 h-5 mr-2" />
             Try Web Version Now
           </Button>

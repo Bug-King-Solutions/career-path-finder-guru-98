@@ -42,7 +42,7 @@ export const Header = () => {
             <a href="#services" className="text-foreground hover:text-primary transition-colors">Services</a>
             <a href="#mobile-app" className="text-foreground hover:text-primary transition-colors">Mobile App</a>
             <button 
-              onClick={() => navigate('/auth')} 
+              onClick={() => navigate('/career-guru')} 
               className="text-foreground hover:text-primary transition-colors"
             >
               Career Guru
@@ -107,7 +107,7 @@ export const Header = () => {
               <a href="#mobile-app" className="text-foreground hover:text-primary transition-colors">Mobile App</a>
               <button 
                 onClick={() => {
-                  navigate('/auth');
+                  navigate('/career-guru');
                   setIsMenuOpen(false);
                 }} 
                 className="text-foreground hover:text-primary transition-colors text-left"

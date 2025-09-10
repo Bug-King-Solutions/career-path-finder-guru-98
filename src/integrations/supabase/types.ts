@@ -143,6 +143,39 @@ export type Database = {
         }
         Relationships: []
       }
+      school_evaluation_questions: {
+        Row: {
+          created_at: string
+          id: string
+          options: Json | null
+          question_text: string
+          question_type: string
+          school_id: string
+          section: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          options?: Json | null
+          question_text: string
+          question_type?: string
+          school_id: string
+          section?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          options?: Json | null
+          question_text?: string
+          question_type?: string
+          school_id?: string
+          section?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       school_options: {
         Row: {
           created_at: string | null
@@ -199,6 +232,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      student_custom_answers: {
+        Row: {
+          answer: string
+          answered_at: string
+          id: string
+          question_id: string
+          student_id: string
+        }
+        Insert: {
+          answer: string
+          answered_at?: string
+          id?: string
+          question_id: string
+          student_id: string
+        }
+        Update: {
+          answer?: string
+          answered_at?: string
+          id?: string
+          question_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_custom_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "school_evaluation_questions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_progress: {
         Row: {

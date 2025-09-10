@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, BookOpen, TrendingUp, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { DashboardHeader } from '@/components/DashboardHeader';
+import { SchoolEvaluationQuestions } from '@/components/SchoolEvaluationQuestions';
+import { StudentAnswersView } from '@/components/StudentAnswersView';
 
 const SchoolDashboard = () => {
   const { user } = useAuth();
@@ -32,10 +36,11 @@ const SchoolDashboard = () => {
         setSchool(schoolData);
       }
 
-      // Fetch all students (schools can view all students in this setup)
+      // Fetch students from this school only
       const { data: studentsData } = await supabase
         .from('students')
         .select('*')
+        .eq('school_id', schoolData.id)
         .order('created_at', { ascending: false });
 
       if (studentsData) {
@@ -87,15 +92,25 @@ const SchoolDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <DashboardHeader studentName={school?.school_name} />
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            {school?.school_name || 'School Dashboard'}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Monitor student progress and career exploration activities
-          </p>
-        </div>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="students">Students</TabsTrigger>
+            <TabsTrigger value="questions">Custom Questions</TabsTrigger>
+            <TabsTrigger value="answers">Student Answers</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="mt-6">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-foreground">
+                {school?.school_name || 'School Dashboard'}
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Monitor student progress and career exploration activities
+              </p>
+            </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -206,57 +221,70 @@ const SchoolDashboard = () => {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Students</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {students.length > 0 ? (
-              <div className="space-y-3">
-                {students.map((student, index) => {
-                  const studentTests = testResults.filter(r => r.student_id === student.id);
-                  const studentProgress = progress.filter(p => p.student_id === student.id);
-                  
-                  return (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <h3 className="font-medium">
-                          {student.first_name} {student.last_name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">{student.email}</p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant="outline">
-                            {studentTests.length} tests
-                          </Badge>
-                          <Badge variant="outline">
-                            {studentProgress.length} career paths
-                          </Badge>
-                          {student.test_completed && (
-                            <Badge variant="default">Test Complete</Badge>
-                          )}
+          </TabsContent>
+
+          <TabsContent value="students" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>All Students</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {students.length > 0 ? (
+                  <div className="space-y-3">
+                    {students.map((student, index) => {
+                      const studentTests = testResults.filter(r => r.student_id === student.id);
+                      const studentProgress = progress.filter(p => p.student_id === student.id);
+                      
+                      return (
+                        <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex-1">
+                            <h3 className="font-medium">
+                              {student.first_name} {student.last_name}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">{student.email}</p>
+                            <div className="flex gap-2 mt-2">
+                              <Badge variant="outline">
+                                {studentTests.length} tests
+                              </Badge>
+                              <Badge variant="outline">
+                                {studentProgress.length} career paths
+                              </Badge>
+                              {student.test_completed && (
+                                <Badge variant="default">Test Complete</Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-muted-foreground">
+                              Joined: {new Date(student.created_at).toLocaleDateString()}
+                            </p>
+                            {studentTests.length > 0 && (
+                              <Badge variant="secondary" className="mt-1">
+                                {studentTests[0].personality_type}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">
-                          Joined: {new Date(student.created_at).toLocaleDateString()}
-                        </p>
-                        {studentTests.length > 0 && (
-                          <Badge variant="secondary" className="mt-1">
-                            {studentTests[0].personality_type}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-8">
-                No students registered yet
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    No students registered yet
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="questions" className="mt-6">
+            {school && <SchoolEvaluationQuestions schoolId={school.id} />}
+          </TabsContent>
+
+          <TabsContent value="answers" className="mt-6">
+            {school && <StudentAnswersView schoolId={school.id} />}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Brain, ArrowRight, RotateCcw, School } from "lucide-react";
 import { toast } from "sonner";
 import { UniversityRecommendations } from "./UniversityRecommendations";
@@ -88,20 +92,87 @@ export const PsychologyTest = () => {
   const { user } = useAuth();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
+  const [allQuestions, setAllQuestions] = useState<(Question | any)[]>(questions);
   const [showResults, setShowResults] = useState(false);
   const [testStarted, setTestStarted] = useState(false);
   const [showUniversities, setShowUniversities] = useState(false);
   const [testResults, setTestResults] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadQuestionsWithCustom();
+  }, [user]);
+
+  const loadQuestionsWithCustom = async () => {
+    try {
+      if (!user) {
+        setAllQuestions(questions);
+        setLoading(false);
+        return;
+      }
+
+      // Get student's school info
+      const { data: studentData } = await supabase
+        .from('students')
+        .select('school_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!studentData?.school_id) {
+        setAllQuestions(questions);
+        setLoading(false);
+        return;
+      }
+
+      // Get custom questions from school
+      const { data: customQuestions } = await supabase
+        .from('school_evaluation_questions')
+        .select('*')
+        .eq('school_id', studentData.school_id)
+        .eq('section', 'psychology');
+
+      if (customQuestions && customQuestions.length > 0) {
+        const combinedQuestions = [...questions, ...customQuestions.map(cq => ({
+          ...cq,
+          isCustom: true
+        }))];
+        setAllQuestions(combinedQuestions);
+      } else {
+        setAllQuestions(questions);
+      }
+    } catch (error) {
+      console.error('Error loading questions:', error);
+      setAllQuestions(questions);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAnswer = (answerIndex: number) => {
-    const newAnswers = [...answers, answerIndex];
-    setAnswers(newAnswers);
-
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
+    const currentQ = allQuestions[currentQuestion];
+    
+    if (currentQ.isCustom) {
+      // For custom questions, we don't track in answers array
+      if (currentQuestion < allQuestions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+      } else {
+        calculateResults(answers);
+      }
     } else {
-      calculateResults(newAnswers);
+      const newAnswers = [...answers, answerIndex];
+      setAnswers(newAnswers);
+
+      if (currentQuestion < allQuestions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+      } else {
+        calculateResults(newAnswers);
+      }
     }
+  };
+
+  const handleCustomAnswer = (questionId: string, answer: string) => {
+    setCustomAnswers(prev => ({ ...prev, [questionId]: answer }));
   };
 
   const calculateResults = async (finalAnswers: number[]) => {
@@ -166,6 +237,19 @@ export const PsychologyTest = () => {
               recommendations: recommendations
             });
 
+          // Save custom answers
+          const customQuestionAnswers = Object.entries(customAnswers).map(([questionId, answer]) => ({
+            student_id: studentData.id,
+            question_id: questionId,
+            answer: answer
+          }));
+
+          if (customQuestionAnswers.length > 0) {
+            await supabase
+              .from('student_custom_answers')
+              .insert(customQuestionAnswers);
+          }
+
           // Update student's personality type
           await supabase
             .from('students')
@@ -187,6 +271,7 @@ export const PsychologyTest = () => {
   const resetTest = () => {
     setCurrentQuestion(0);
     setAnswers([]);
+    setCustomAnswers({});
     setShowResults(false);
     setTestStarted(false);
     setShowUniversities(false);
@@ -380,29 +465,122 @@ export const PsychologyTest = () => {
     );
   }
 
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  if (loading) {
+    return (
+      <Card className="max-w-2xl mx-auto shadow-elegant">
+        <CardContent className="py-8">
+          <div className="animate-pulse text-center">Loading assessment...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const progress = ((currentQuestion + 1) / allQuestions.length) * 100;
+  const currentQ = allQuestions[currentQuestion];
+
+  const renderCustomQuestion = () => {
+    switch (currentQ.question_type) {
+      case 'multiple_choice':
+        return (
+          <div className="space-y-4">
+            <RadioGroup
+              value={customAnswers[currentQ.id] || ''}
+              onValueChange={(value) => handleCustomAnswer(currentQ.id, value)}
+            >
+              {currentQ.options?.map((option: string, index: number) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option} id={`option-${index}`} />
+                  <Label htmlFor={`option-${index}`} className="text-sm">{option}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+            <Button 
+              onClick={() => handleAnswer(0)} 
+              disabled={!customAnswers[currentQ.id]}
+              className="w-full"
+            >
+              Next Question
+            </Button>
+          </div>
+        );
+      case 'text':
+        return (
+          <div className="space-y-4">
+            <Textarea
+              value={customAnswers[currentQ.id] || ''}
+              onChange={(e) => handleCustomAnswer(currentQ.id, e.target.value)}
+              placeholder="Type your answer here..."
+              className="min-h-[100px]"
+            />
+            <Button 
+              onClick={() => handleAnswer(0)} 
+              disabled={!customAnswers[currentQ.id]?.trim()}
+              className="w-full"
+            >
+              Next Question
+            </Button>
+          </div>
+        );
+      case 'rating':
+        return (
+          <div className="space-y-4">
+            <RadioGroup
+              value={customAnswers[currentQ.id] || ''}
+              onValueChange={(value) => handleCustomAnswer(currentQ.id, value)}
+            >
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <div key={rating} className="flex items-center space-x-2">
+                  <RadioGroupItem value={rating.toString()} id={`rating-${rating}`} />
+                  <Label htmlFor={`rating-${rating}`} className="text-sm">
+                    {rating} - {rating === 1 ? 'Strongly Disagree' : rating === 5 ? 'Strongly Agree' : ''}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+            <Button 
+              onClick={() => handleAnswer(0)} 
+              disabled={!customAnswers[currentQ.id]}
+              className="w-full"
+            >
+              Next Question
+            </Button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <Card className="max-w-2xl mx-auto shadow-elegant">
       <CardHeader>
         <div className="flex justify-between items-center mb-4">
-          <Badge variant="outline">Question {currentQuestion + 1} of {questions.length}</Badge>
+          <Badge variant="outline">Question {currentQuestion + 1} of {allQuestions.length}</Badge>
           <span className="text-sm text-muted-foreground">{Math.round(progress)}% Complete</span>
         </div>
         <Progress value={progress} className="h-2 mb-4" />
-        <CardTitle className="text-xl">{questions[currentQuestion].question}</CardTitle>
+        <CardTitle className="text-xl">
+          {currentQ.question_text || currentQ.question}
+          {currentQ.isCustom && (
+            <Badge variant="secondary" className="ml-2 text-xs">School Question</Badge>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {questions[currentQuestion].options.map((option, index) => (
-          <Button
-            key={index}
-            variant="outline"
-            className="w-full text-left justify-start h-auto p-4 hover:bg-primary/5"
-            onClick={() => handleAnswer(index)}
-          >
-            <span className="text-sm">{option}</span>
-          </Button>
-        ))}
+        {currentQ.isCustom ? (
+          renderCustomQuestion()
+        ) : (
+          currentQ.options.map((option: string, index: number) => (
+            <Button
+              key={index}
+              variant="outline"
+              className="w-full text-left justify-start h-auto p-4 hover:bg-primary/5"
+              onClick={() => handleAnswer(index)}
+            >
+              <span className="text-sm">{option}</span>
+            </Button>
+          ))
+        )}
       </CardContent>
     </Card>
   );

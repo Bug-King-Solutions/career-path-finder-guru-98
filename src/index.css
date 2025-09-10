@@ -9,26 +9,30 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 245 50% 98%;
-    --foreground: 220 15% 25%;
+    --foreground: 231 96% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 25%;
+    --card-foreground: 231 96% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 25%;
+    --popover-foreground: 231 96% 11%;
 
-    --primary: 229 85% 59%;
+    --primary: 230 84% 58%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 229 75% 70%;
-    --primary-dark: 229 90% 45%;
+    --primary-light: 230 70% 70%;
+    --primary-dark: 230 90% 45%;
 
-    --secondary: 10 86% 60%;
+    --secondary: 9 86% 60%;
     --secondary-foreground: 0 0% 100%;
-    --secondary-light: 10 80% 75%;
+    --secondary-light: 9 80% 75%;
 
-    --accent: 229 85% 95%;
-    --accent-foreground: 229 85% 59%;
-    --accent-light: 229 60% 97%;
+    --tertiary: 231 96% 11%;
+    --tertiary-foreground: 0 0% 100%;
+    --tertiary-light: 231 80% 25%;
+
+    --accent: 230 84% 95%;
+    --accent-foreground: 230 84% 58%;
+    --accent-light: 230 60% 97%;
 
     --muted: 220 15% 96%;
     --muted-foreground: 220 10% 45%;
@@ -38,17 +42,19 @@ All colors MUST be HSL.
 
     --border: 220 15% 90%;
     --input: 220 15% 95%;
-    --ring: 210 90% 45%;
+    --ring: 230 84% 58%;
 
     /* Custom design tokens */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-light)) 100%);
     --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--secondary-light)) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(var(--primary-dark)) 0%, hsl(var(--primary)) 50%, hsl(var(--secondary)) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(var(--tertiary)) 0%, hsl(var(--primary)) 50%, hsl(var(--secondary)) 100%);
+    --gradient-tertiary: linear-gradient(135deg, hsl(var(--tertiary)) 0%, hsl(var(--tertiary-light)) 100%);
     --shadow-elegant: 0 10px 30px -5px hsl(var(--primary) / 0.2);
     --shadow-card: 0 4px 20px -2px hsl(var(--primary) / 0.1);
+    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.3);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -68,41 +74,45 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 231 96% 5%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 231 96% 7%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 231 96% 7%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 230 84% 58%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 9 86% 60%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --tertiary: 231 96% 11%;
+    --tertiary-foreground: 0 0% 100%;
+
+    --muted: 231 80% 15%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 231 80% 15%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
+    --border: 231 80% 15%;
+    --input: 231 80% 15%;
+    --ring: 230 84% 58%;
+    
+    --sidebar-background: 231 96% 7%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 230 84% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent: 231 80% 12%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-border: 231 80% 12%;
+    --sidebar-ring: 230 84% 58%;
   }
 }
 
@@ -113,5 +123,8 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+    font-variation-settings: 'opsz' 32;
   }
 }

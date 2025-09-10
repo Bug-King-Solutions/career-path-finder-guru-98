@@ -2,8 +2,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Users, BookOpen, TrendingUp, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { SchoolEvaluationQuestions } from '@/components/SchoolEvaluationQuestions';
@@ -12,11 +17,20 @@ import { StudentManagement } from '@/components/StudentManagement';
 
 const SchoolDashboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [school, setSchool] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [testResults, setTestResults] = useState<any[]>([]);
   const [progress, setProgress] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newStudent, setNewStudent] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: ''
+  });
+  const [createLoading, setCreateLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -75,6 +89,77 @@ const SchoolDashboard = () => {
       console.error('Error fetching school data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createStudent = async () => {
+    if (!newStudent.firstName || !newStudent.lastName || !newStudent.email || !newStudent.password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setCreateLoading(true);
+    try {
+      // Create user in auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newStudent.email,
+        password: newStudent.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            first_name: newStudent.firstName,
+            last_name: newStudent.lastName
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Create student profile
+        const { error: studentError } = await supabase
+          .from('students')
+          .insert({
+            user_id: authData.user.id,
+            first_name: newStudent.firstName,
+            last_name: newStudent.lastName,
+            email: newStudent.email,
+            school_id: school.id
+          });
+
+        if (studentError) throw studentError;
+
+        // Create user role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: 'student'
+          });
+
+        if (roleError) throw roleError;
+
+        toast({
+          title: "Success",
+          description: "Student created successfully"
+        });
+
+        setNewStudent({ firstName: '', lastName: '', email: '', password: '' });
+        setIsCreateDialogOpen(false);
+        fetchSchoolData();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create student",
+        variant: "destructive"
+      });
+    } finally {
+      setCreateLoading(false);
     }
   };
 
@@ -227,8 +312,12 @@ const SchoolDashboard = () => {
 
           <TabsContent value="students" className="mt-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>All Students</CardTitle>
+                <Button onClick={() => setIsCreateDialogOpen(true)} className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Add Student
+                </Button>
               </CardHeader>
               <CardContent>
                 {students.length > 0 ? (
@@ -297,6 +386,65 @@ const SchoolDashboard = () => {
             {school && <StudentAnswersView schoolId={school.id} />}
           </TabsContent>
         </Tabs>
+
+        {/* Create Student Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Student</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    value={newStudent.firstName}
+                    onChange={(e) => setNewStudent(prev => ({ ...prev, firstName: e.target.value }))}
+                    placeholder="Enter first name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    value={newStudent.lastName}
+                    onChange={(e) => setNewStudent(prev => ({ ...prev, lastName: e.target.value }))}
+                    placeholder="Enter last name"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newStudent.email}
+                  onChange={(e) => setNewStudent(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="Enter email address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={newStudent.password}
+                  onChange={(e) => setNewStudent(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="Enter password (min 6 characters)"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={createStudent} disabled={createLoading}>
+                {createLoading ? 'Creating...' : 'Create Student'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

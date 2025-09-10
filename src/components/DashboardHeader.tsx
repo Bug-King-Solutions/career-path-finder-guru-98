@@ -39,9 +39,24 @@ export const DashboardHeader = ({ studentName }: Props) => {
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Student Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Manage your career exploration journey</p>
+        <div className="flex items-center space-x-3">
+          <img 
+            src="/lovable-uploads/558ff49b-71c3-49e5-af31-23a7886a341a.png" 
+            alt="Mindscope Academy Logo" 
+            className="w-8 h-8"
+          />
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">
+              {userRole === 'admin' ? 'Admin Dashboard' : 
+               userRole === 'school' ? 'School Dashboard' : 
+               'Student Dashboard'}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {userRole === 'admin' ? 'Manage platform and users' :
+               userRole === 'school' ? 'Manage students and assessments' :
+               'Manage your career exploration journey'}
+            </p>
+          </div>
         </div>
         
         <div className="flex items-center gap-4">

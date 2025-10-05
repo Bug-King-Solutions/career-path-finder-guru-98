@@ -221,6 +221,45 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          image_url: string | null
+          order_position: number | null
+          status: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          image_url?: string | null
+          order_position?: number | null
+          status?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          image_url?: string | null
+          order_position?: number | null
+          status?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       school_evaluation_questions: {
         Row: {
           created_at: string
@@ -308,6 +347,72 @@ export type Database = {
           school_name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          order_position: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          order_position?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          order_position?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          content: Json | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          section: string
+          subtitle: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          section: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          section?: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -496,39 +601,6 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
-        }
-        Relationships: []
-      }
-      website_content: {
-        Row: {
-          content: Json | null
-          created_at: string | null
-          description: string | null
-          id: string
-          image_url: string | null
-          section_name: string
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          content?: Json | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          section_name: string
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          content?: Json | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          section_name?: string
-          title?: string
-          updated_at?: string | null
         }
         Relationships: []
       }

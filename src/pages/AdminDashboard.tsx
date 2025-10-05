@@ -9,6 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { AdminSchoolManagement } from '@/components/AdminSchoolManagement';
 import { AdminStudentManagement } from '@/components/AdminStudentManagement';
+import { AdminContentManagement } from '@/components/AdminContentManagement';
+import { AdminQuestionManagement } from '@/components/AdminQuestionManagement';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -121,6 +123,8 @@ const AdminDashboard = () => {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="schools">Schools</TabsTrigger>
             <TabsTrigger value="students">Students</TabsTrigger>
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="questions">Questions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -307,6 +311,14 @@ const AdminDashboard = () => {
 
           <TabsContent value="students">
             <AdminStudentManagement />
+          </TabsContent>
+
+          <TabsContent value="content">
+            <AdminContentManagement />
+          </TabsContent>
+
+          <TabsContent value="questions">
+            <AdminQuestionManagement />
           </TabsContent>
         </Tabs>
       </div>

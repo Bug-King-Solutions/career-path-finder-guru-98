@@ -35,7 +35,7 @@ export const AdminContentManagement = () => {
         .order('section_name');
 
       if (error) throw error;
-      setSections(data || []);
+      setSections((data || []) as ContentSection[]);
     } catch (error) {
       console.error('Error fetching content:', error);
       toast.error('Failed to load content');

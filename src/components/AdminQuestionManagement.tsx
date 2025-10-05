@@ -44,7 +44,7 @@ export const AdminQuestionManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setQuestions(data || []);
+      setQuestions((data || []) as Question[]);
     } catch (error) {
       console.error('Error fetching questions:', error);
       toast.error('Failed to load questions');

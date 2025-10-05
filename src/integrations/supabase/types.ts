@@ -267,7 +267,7 @@ export type Database = {
           options: Json | null
           question_text: string
           question_type: string
-          school_id: string
+          school_id: string | null
           section: string
           updated_at: string
         }
@@ -277,7 +277,7 @@ export type Database = {
           options?: Json | null
           question_text: string
           question_type?: string
-          school_id: string
+          school_id?: string | null
           section?: string
           updated_at?: string
         }
@@ -287,7 +287,7 @@ export type Database = {
           options?: Json | null
           question_text?: string
           question_type?: string
-          school_id?: string
+          school_id?: string | null
           section?: string
           updated_at?: string
         }

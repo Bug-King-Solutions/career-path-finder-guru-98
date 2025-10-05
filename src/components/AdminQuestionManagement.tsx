@@ -68,7 +68,7 @@ export const AdminQuestionManagement = () => {
           toast.error('Please provide at least 2 options');
           return;
         }
-        questionData.options = validOptions;
+        questionData.options = JSON.stringify(validOptions);
       }
 
       const { error } = await supabase
@@ -251,12 +251,15 @@ export const AdminQuestionManagement = () => {
                   </Button>
                 </div>
               </CardHeader>
-              {question.options && question.options.length > 0 && (
+              {question.options && (
                 <CardContent>
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">Options:</p>
                     <ul className="list-disc list-inside space-y-1">
-                      {question.options.map((option, index) => (
+                      {(Array.isArray(question.options) 
+                        ? question.options 
+                        : JSON.parse(question.options as string)
+                      ).map((option: string, index: number) => (
                         <li key={index} className="text-sm">{option}</li>
                       ))}
                     </ul>

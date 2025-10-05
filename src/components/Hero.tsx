@@ -1,17 +1,46 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, BookOpen, Award } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import { BookingForm } from "./BookingForm";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Hero = () => {
   const navigate = useNavigate();
+  const [heroData, setHeroData] = useState({
+    title: "Discover Your Perfect Career Path",
+    subtitle: "Expert Career Guidance",
+    description: "Expert psychology-based career guidance, comprehensive assessments, and personalized university recommendations for Nigerian students.",
+    image_url: heroImage
+  });
+
+  useEffect(() => {
+    const fetchHeroData = async () => {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('*')
+        .eq('section', 'hero')
+        .single();
+      
+      if (data) {
+        setHeroData({
+          title: data.title || heroData.title,
+          subtitle: data.subtitle || heroData.subtitle,
+          description: data.description || heroData.description,
+          image_url: data.image_url || heroImage
+        });
+      }
+    };
+    
+    fetchHeroData();
+  }, []);
 
   return (
     <section id="home" className="relative py-20 overflow-hidden">
       <div className="absolute inset-0">
         <img 
-          src={heroImage} 
+          src={heroData.image_url} 
           alt="Career guidance consultation" 
           className="w-full h-full object-cover"
         />
@@ -22,11 +51,10 @@ export const Hero = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="text-white animate-fade-in">
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-              Discover Your 
-              <span className="text-accent-light"> Perfect Career Path</span>
+              {heroData.title}
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-white/90 leading-relaxed">
-              Expert psychology-based career guidance, comprehensive assessments, and personalized university recommendations for Nigerian students.
+              {heroData.description}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
               <Button 

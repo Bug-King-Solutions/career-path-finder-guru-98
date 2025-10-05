@@ -7,35 +7,59 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Image, Upload } from 'lucide-react';
+import { Upload, Plus, Trash2 } from 'lucide-react';
 
-interface ContentSection {
+interface SiteSetting {
   id: string;
-  section_name: string;
-  title: string;
-  description: string;
+  section: string;
+  title: string | null;
+  subtitle: string | null;
+  description: string | null;
   image_url: string | null;
   content: any;
 }
 
+interface Service {
+  id: string;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  order_position: number;
+}
+
+interface Product {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  description: string | null;
+  image_url: string | null;
+  features: any;
+  status: string;
+  order_position: number;
+}
+
 export const AdminContentManagement = () => {
-  const [sections, setSections] = useState<ContentSection[]>([]);
+  const [siteSettings, setSiteSettings] = useState<SiteSetting[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    fetchContent();
+    fetchAllContent();
   }, []);
 
-  const fetchContent = async () => {
+  const fetchAllContent = async () => {
     try {
-      const { data, error } = await supabase
-        .from('website_content')
-        .select('*')
-        .order('section_name');
+      const [settingsData, servicesData, productsData] = await Promise.all([
+        supabase.from('site_settings').select('*').order('section'),
+        supabase.from('services').select('*').order('order_position'),
+        supabase.from('products').select('*').order('order_position')
+      ]);
 
-      if (error) throw error;
-      setSections((data || []) as ContentSection[]);
+      if (settingsData.data) setSiteSettings(settingsData.data);
+      if (servicesData.data) setServices(servicesData.data);
+      if (productsData.data) setProducts(productsData.data);
     } catch (error) {
       console.error('Error fetching content:', error);
       toast.error('Failed to load content');
@@ -44,16 +68,16 @@ export const AdminContentManagement = () => {
     }
   };
 
-  const handleImageUpload = async (file: File, sectionId: string) => {
+  const handleImageUpload = async (file: File, section: string, type: 'site_settings' | 'products') => {
     try {
       setUploading(true);
       const fileExt = file.name.split('.').pop();
-      const fileName = `${sectionId}-${Date.now()}.${fileExt}`;
+      const fileName = `${section}-${Date.now()}.${fileExt}`;
       const filePath = `content/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('bugking_images')
-        .upload(filePath, file);
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -61,15 +85,22 @@ export const AdminContentManagement = () => {
         .from('bugking_images')
         .getPublicUrl(filePath);
 
-      const { error: updateError } = await supabase
-        .from('website_content')
-        .update({ image_url: publicUrl })
-        .eq('id', sectionId);
-
-      if (updateError) throw updateError;
+      if (type === 'site_settings') {
+        const { error } = await supabase
+          .from('site_settings')
+          .update({ image_url: publicUrl })
+          .eq('section', section);
+        if (error) throw error;
+      } else if (type === 'products') {
+        const { error } = await supabase
+          .from('products')
+          .update({ image_url: publicUrl })
+          .eq('id', section);
+        if (error) throw error;
+      }
 
       toast.success('Image uploaded successfully');
-      fetchContent();
+      fetchAllContent();
     } catch (error) {
       console.error('Error uploading image:', error);
       toast.error('Failed to upload image');
@@ -78,20 +109,87 @@ export const AdminContentManagement = () => {
     }
   };
 
-  const handleUpdateSection = async (sectionId: string, updates: Partial<ContentSection>) => {
+  const updateSiteSetting = async (section: string, updates: Partial<SiteSetting>) => {
     try {
       const { error } = await supabase
-        .from('website_content')
+        .from('site_settings')
         .update(updates)
-        .eq('id', sectionId);
+        .eq('section', section);
 
       if (error) throw error;
-
-      toast.success('Section updated successfully');
-      fetchContent();
+      toast.success('Updated successfully');
+      fetchAllContent();
     } catch (error) {
-      console.error('Error updating section:', error);
-      toast.error('Failed to update section');
+      console.error('Error updating:', error);
+      toast.error('Failed to update');
+    }
+  };
+
+  const updateService = async (id: string, updates: Partial<Service>) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Service updated');
+      fetchAllContent();
+    } catch (error) {
+      console.error('Error updating service:', error);
+      toast.error('Failed to update service');
+    }
+  };
+
+  const deleteService = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Service deleted');
+      fetchAllContent();
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      toast.error('Failed to delete service');
+    }
+  };
+
+  const addService = async () => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .insert([{
+          title: 'New Service',
+          description: 'Service description',
+          icon: 'Target',
+          order_position: services.length
+        }]);
+
+      if (error) throw error;
+      toast.success('Service added');
+      fetchAllContent();
+    } catch (error) {
+      console.error('Error adding service:', error);
+      toast.error('Failed to add service');
+    }
+  };
+
+  const updateProduct = async (id: string, updates: Partial<Product>) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Product updated');
+      fetchAllContent();
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast.error('Failed to update product');
     }
   };
 
@@ -103,12 +201,16 @@ export const AdminContentManagement = () => {
     );
   }
 
+  const heroSettings = siteSettings.find(s => s.section === 'hero');
+  const aboutSettings = siteSettings.find(s => s.section === 'about');
+  const contactSettings = siteSettings.find(s => s.section === 'contact');
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Content Management</h2>
-          <p className="text-muted-foreground">Manage website sections, images, and content</p>
+          <p className="text-muted-foreground">Manage all website content from here</p>
         </div>
       </div>
 
@@ -118,6 +220,7 @@ export const AdminContentManagement = () => {
           <TabsTrigger value="about">About</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="contact">Contact</TabsTrigger>
         </TabsList>
 
         <TabsContent value="hero" className="space-y-4">
@@ -127,40 +230,35 @@ export const AdminContentManagement = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="hero-title">Title</Label>
+                <Label>Title</Label>
                 <Input
-                  id="hero-title"
-                  placeholder="Hero title"
-                  defaultValue="Transform Your Career Journey"
+                  defaultValue={heroSettings?.title || ''}
+                  onBlur={(e) => updateSiteSetting('hero', { title: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="hero-description">Description</Label>
+                <Label>Description</Label>
                 <Textarea
-                  id="hero-description"
-                  placeholder="Hero description"
-                  defaultValue="Expert career guidance and psychology assessments"
+                  defaultValue={heroSettings?.description || ''}
+                  onBlur={(e) => updateSiteSetting('hero', { description: e.target.value })}
                   rows={4}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="hero-image">Hero Image</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    id="hero-image"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageUpload(file, 'hero');
-                    }}
-                  />
-                  <Upload className="h-5 w-5 text-muted-foreground" />
-                </div>
+                <Label>Background Image</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImageUpload(file, 'hero', 'site_settings');
+                  }}
+                  disabled={uploading}
+                />
+                {heroSettings?.image_url && (
+                  <img src={heroSettings.image_url} alt="Hero" className="mt-2 h-32 object-cover rounded" />
+                )}
               </div>
-              <Button onClick={() => toast.success('Hero section updated')}>
-                Save Changes
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -172,104 +270,159 @@ export const AdminContentManagement = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="about-title">Title</Label>
+                <Label>Title</Label>
                 <Input
-                  id="about-title"
-                  placeholder="About title"
-                  defaultValue="Meet Mr. Paul Olayiwola"
+                  defaultValue={aboutSettings?.title || ''}
+                  onBlur={(e) => updateSiteSetting('about', { title: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="about-bio">Biography</Label>
+                <Label>Subtitle</Label>
+                <Input
+                  defaultValue={aboutSettings?.subtitle || ''}
+                  onBlur={(e) => updateSiteSetting('about', { subtitle: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
                 <Textarea
-                  id="about-bio"
-                  placeholder="Biography text"
+                  defaultValue={aboutSettings?.description || ''}
+                  onBlur={(e) => updateSiteSetting('about', { description: e.target.value })}
                   rows={6}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="about-image">Profile Image</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    id="about-image"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageUpload(file, 'about');
-                    }}
-                  />
-                  <Image className="h-5 w-5 text-muted-foreground" />
-                </div>
-              </div>
-              <Button onClick={() => toast.success('About section updated')}>
-                Save Changes
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="services" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Services Section</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="services-title">Title</Label>
-                <Input
-                  id="services-title"
-                  placeholder="Services title"
-                  defaultValue="Our Services"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="services-description">Description</Label>
-                <Textarea
-                  id="services-description"
-                  placeholder="Services description"
-                  rows={4}
-                />
-              </div>
-              <Button onClick={() => toast.success('Services section updated')}>
-                Save Changes
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Manage Services</h3>
+            <Button onClick={addService}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Service
+            </Button>
+          </div>
+          
+          {services.map((service) => (
+            <Card key={service.id}>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>{service.title}</CardTitle>
+                  <Button variant="destructive" size="sm" onClick={() => deleteService(service.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input
+                    defaultValue={service.title}
+                    onBlur={(e) => updateService(service.id, { title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea
+                    defaultValue={service.description || ''}
+                    onBlur={(e) => updateService(service.id, { description: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Icon Name (Brain, Target, Users, etc.)</Label>
+                  <Input
+                    defaultValue={service.icon || ''}
+                    onBlur={(e) => updateService(service.id, { icon: e.target.value })}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </TabsContent>
 
         <TabsContent value="products" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Products Section</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="products-title">Title</Label>
-                <Input
-                  id="products-title"
-                  placeholder="Products title"
-                  defaultValue="Our Products"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="app-mockup">App Mockup Image</Label>
-                <div className="flex items-center gap-4">
+          {products.map((product) => (
+            <Card key={product.id}>
+              <CardHeader>
+                <CardTitle>{product.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Title</Label>
                   <Input
-                    id="app-mockup"
+                    defaultValue={product.title}
+                    onBlur={(e) => updateProduct(product.id, { title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Subtitle</Label>
+                  <Input
+                    defaultValue={product.subtitle || ''}
+                    onBlur={(e) => updateProduct(product.id, { subtitle: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea
+                    defaultValue={product.description || ''}
+                    onBlur={(e) => updateProduct(product.id, { description: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <select
+                    className="w-full p-2 border rounded"
+                    defaultValue={product.status}
+                    onChange={(e) => updateProduct(product.id, { status: e.target.value })}
+                  >
+                    <option value="active">Active</option>
+                    <option value="coming_soon">Coming Soon</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Product Image</Label>
+                  <Input
                     type="file"
                     accept="image/*"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) handleImageUpload(file, 'app-mockup');
+                      if (file) handleImageUpload(file, product.id, 'products');
                     }}
+                    disabled={uploading}
                   />
-                  <Image className="h-5 w-5 text-muted-foreground" />
+                  {product.image_url && (
+                    <img src={product.image_url} alt={product.title} className="mt-2 h-32 object-cover rounded" />
+                  )}
                 </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="contact" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Section</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Title</Label>
+                <Input
+                  defaultValue={contactSettings?.title || ''}
+                  onBlur={(e) => updateSiteSetting('contact', { title: e.target.value })}
+                />
               </div>
-              <Button onClick={() => toast.success('Products section updated')}>
-                Save Changes
-              </Button>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  defaultValue={contactSettings?.description || ''}
+                  onBlur={(e) => updateSiteSetting('contact', { description: e.target.value })}
+                  rows={4}
+                />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,66 +6,45 @@ import { ArrowRight, Smartphone, Brain, GraduationCap, Zap, Users, Target, Star,
 import { useNavigate } from "react-router-dom";
 import { WaitlistForm } from "@/components/WaitlistForm";
 import careerGuruMockup from "@/assets/career-guru-mockup.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Products = () => {
   const navigate = useNavigate();
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
 
-  const products = [
-    {
-      id: "career-guru-web",
-      title: "Career Guru",
-      subtitle: "Web Platform",
-      description: "Comprehensive career guidance system with psychology-based assessments and AI-powered recommendations.",
-      status: "Available Now",
-      statusColor: "bg-green-500",
-      image: careerGuruMockup,
-      features: [
-        { icon: Brain, text: "Psychology Tests" },
-        { icon: Target, text: "Career Matching" },
-        { icon: GraduationCap, text: "University Finder" },
-        { icon: Users, text: "Expert Guidance" }
-      ],
-      stats: [
-        { label: "Success Rate", value: "98%" },
-        { label: "Universities", value: "50+" },
-        { label: "Students", value: "500+" }
-      ],
-      primaryAction: {
-        text: "Explore Career Guru",
-        action: () => navigate('/career-guru')
-      },
-      secondaryAction: {
-        text: "Try Psychology Test",
-        action: () => navigate('/psychology-test')
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .order('order_position');
+      
+      if (data && data.length > 0) {
+        setProducts(data.map(product => ({
+          id: product.id,
+          title: product.title,
+          subtitle: product.subtitle,
+          description: product.description,
+          status: product.status === 'active' ? 'Available Now' : 'Coming Soon',
+          statusColor: product.status === 'active' ? 'bg-green-500' : 'bg-orange-500',
+          image: product.image_url || careerGuruMockup,
+          features: product.features || [],
+          stats: [],
+          primaryAction: product.status === 'active' ? {
+            text: "Explore Career Guru",
+            action: () => navigate('/career-guru')
+          } : undefined,
+          secondaryAction: product.status === 'active' ? {
+            text: "Try Psychology Test",
+            action: () => navigate('/psychology-test')
+          } : undefined
+        })));
       }
-    },
-    {
-      id: "career-guru-mobile",
-      title: "Career Guru",
-      subtitle: "Mobile App",
-      description: "Take your career guidance journey anywhere with our upcoming native mobile application.",
-      status: "Coming Soon",
-      statusColor: "bg-orange-500",
-      image: "/lovable-uploads/558ff49b-71c3-49e5-af31-23a7886a341a.png",
-      features: [
-        { icon: Smartphone, text: "Native Experience" },
-        { icon: Zap, text: "Offline Access" },
-        { icon: Calendar, text: "Smart Reminders" },
-        { icon: Star, text: "Premium Features" }
-      ],
-      stats: [
-        { label: "Launch", value: "Q2 2025" },
-        { label: "Pre-orders", value: "1K+" },
-        { label: "Features", value: "25+" }
-      ],
-      timeline: [
-        { phase: "Beta Testing", status: "active", date: "Jan 2025" },
-        { phase: "App Store Review", status: "pending", date: "Feb 2025" },
-        { phase: "Public Launch", status: "pending", date: "Mar 2025" }
-      ]
-    }
-  ];
+    };
+    
+    fetchProducts();
+  }, [navigate]);
 
   return (
     <section id="products" className="py-32 bg-gradient-to-br from-background via-muted/30 to-background relative overflow-hidden">
@@ -127,29 +106,33 @@ export const Products = () => {
                       </div>
 
                       {/* Features */}
-                      <div className="grid grid-cols-2 gap-4">
-                        {product.features.map((feature, featureIndex) => (
-                          <div 
-                            key={featureIndex} 
-                            className="flex items-center space-x-3 p-3 rounded-lg bg-muted/50 hover:bg-primary/5 transition-all duration-300"
-                          >
-                            <div className="p-2 bg-primary/10 rounded-lg">
-                              <feature.icon className="w-4 h-4 text-primary" />
+                      {product.features && product.features.length > 0 && (
+                        <div className="grid grid-cols-2 gap-4">
+                          {product.features.map((feature: string, featureIndex: number) => (
+                            <div 
+                              key={featureIndex} 
+                              className="flex items-center space-x-3 p-3 rounded-lg bg-muted/50 hover:bg-primary/5 transition-all duration-300"
+                            >
+                              <div className="p-2 bg-primary/10 rounded-lg">
+                                <Star className="w-4 h-4 text-primary" />
+                              </div>
+                              <span className="text-sm font-medium text-foreground">{feature}</span>
                             </div>
-                            <span className="text-sm font-medium text-foreground">{feature.text}</span>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Stats */}
-                      <div className="grid grid-cols-3 gap-6 p-6 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-2xl border border-primary/10">
-                        {product.stats.map((stat, statIndex) => (
-                          <div key={statIndex} className="text-center">
-                            <div className="text-2xl font-bold text-primary mb-1">{stat.value}</div>
-                            <div className="text-sm text-muted-foreground">{stat.label}</div>
-                          </div>
-                        ))}
-                      </div>
+                      {product.stats && product.stats.length > 0 && (
+                        <div className="grid grid-cols-3 gap-6 p-6 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-2xl border border-primary/10">
+                          {product.stats.map((stat: any, statIndex: number) => (
+                            <div key={statIndex} className="text-center">
+                              <div className="text-2xl font-bold text-primary mb-1">{stat.value}</div>
+                              <div className="text-sm text-muted-foreground">{stat.label}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Timeline for Mobile App */}
                       {product.id === 'career-guru-mobile' && product.timeline && (
@@ -179,25 +162,27 @@ export const Products = () => {
 
                       {/* Actions */}
                       <div className="flex flex-col sm:flex-row gap-4">
-                        {product.id === 'career-guru-web' ? (
+                        {product.status === 'Available Now' ? (
                           <>
                             <Button 
                               size="lg" 
-                              onClick={product.primaryAction.action}
+                              onClick={product.primaryAction?.action}
                               className="flex-1 text-lg py-6 group/btn"
                             >
-                              {product.primaryAction.text}
+                              {product.primaryAction?.text || 'Explore'}
                               <ArrowRight className="ml-2 w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="lg"
-                              onClick={product.secondaryAction?.action}
-                              className="flex-1 text-lg py-6"
-                            >
-                              <Brain className="mr-2 w-5 h-5" />
-                              {product.secondaryAction?.text}
-                            </Button>
+                            {product.secondaryAction && (
+                              <Button 
+                                variant="outline" 
+                                size="lg"
+                                onClick={product.secondaryAction.action}
+                                className="flex-1 text-lg py-6"
+                              >
+                                <Brain className="mr-2 w-5 h-5" />
+                                {product.secondaryAction.text}
+                              </Button>
+                            )}
                           </>
                         ) : (
                           <div className="space-y-4">
@@ -249,7 +234,7 @@ export const Products = () => {
                             </div>
                           </div>
 
-                          {product.id === 'career-guru-web' && (
+                          {product.status === 'Available Now' && (
                             <div className={`absolute -bottom-4 -left-4 bg-primary text-primary-foreground rounded-xl p-4 shadow-xl transition-all duration-500 delay-200 ${
                               hoveredProduct === product.id ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'
                             }`}>

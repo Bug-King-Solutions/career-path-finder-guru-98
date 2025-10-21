@@ -9,7 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Users, BookOpen, TrendingUp, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/integrations/firebase/config';
+import { getDocumentByField, queryDocuments, createDocument, createDocumentWithId } from '@/integrations/firebase/utils';
+import { COLLECTIONS, School, Student, StudentTestResult, StudentProgress } from '@/integrations/firebase/types';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { SchoolEvaluationQuestions } from '@/components/SchoolEvaluationQuestions';
 import { StudentAnswersView } from '@/components/StudentAnswersView';
@@ -18,8 +21,8 @@ import { StudentManagement } from '@/components/StudentManagement';
 const SchoolDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [school, setSchool] = useState<any>(null);
-  const [students, setStudents] = useState<any[]>([]);
+  const [school, setSchool] = useState<School | null>(null);
+  const [students, setStudents] = useState<Student[]>([]);
   const [testResults, setTestResults] = useState<any[]>([]);
   const [progress, setProgress] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,47 +44,65 @@ const SchoolDashboard = () => {
   const fetchSchoolData = async () => {
     try {
       // Fetch school profile
-      const { data: schoolData } = await supabase
-        .from('schools')
-        .select('*')
-        .eq('user_id', user!.id)
-        .single();
+      const schoolData = await getDocumentByField<School>(
+        COLLECTIONS.SCHOOLS,
+        'userId',
+        user!.uid
+      );
 
       if (schoolData) {
         setSchool(schoolData);
-      }
 
-      // Fetch students from this school only
-      const { data: studentsData } = await supabase
-        .from('students')
-        .select('*')
-        .eq('school_id', schoolData.id)
-        .order('created_at', { ascending: false });
+        // Fetch students from this school only
+        const studentsData = await queryDocuments<Student>(
+          COLLECTIONS.STUDENTS,
+          [{ field: 'schoolId', operator: '==', value: schoolData.id }],
+          'createdAt',
+          'desc'
+        );
 
-      if (studentsData) {
-        setStudents(studentsData);
+        if (studentsData) {
+          setStudents(studentsData);
 
-        // Fetch test results for all students
-        const studentIds = studentsData.map(s => s.id);
-        if (studentIds.length > 0) {
-          const { data: resultsData } = await supabase
-            .from('student_test_results')
-            .select('*, students(first_name, last_name)')
-            .in('student_id', studentIds)
-            .order('completed_at', { ascending: false });
+          // Fetch test results for all students
+          const studentIds = studentsData.map(s => s.id);
+          if (studentIds.length > 0) {
+            const resultsData = await queryDocuments<StudentTestResult>(
+              COLLECTIONS.STUDENT_TEST_RESULTS,
+              [{ field: 'studentId', operator: 'in', value: studentIds }],
+              'completedAt',
+              'desc'
+            );
 
-          if (resultsData) {
-            setTestResults(resultsData);
-          }
+            if (resultsData) {
+              // Enrich with student names
+              const enrichedResults = resultsData.map(result => {
+                const student = studentsData.find(s => s.id === result.studentId);
+                return {
+                  ...result,
+                  students: student ? { first_name: student.firstName, last_name: student.lastName } : null
+                };
+              });
+              setTestResults(enrichedResults);
+            }
 
-          // Fetch progress for all students
-          const { data: progressData } = await supabase
-            .from('student_progress')
-            .select('*, students(first_name, last_name)')
-            .in('student_id', studentIds);
+            // Fetch progress for all students
+            const progressData = await queryDocuments<StudentProgress>(
+              COLLECTIONS.STUDENT_PROGRESS,
+              [{ field: 'studentId', operator: 'in', value: studentIds }]
+            );
 
-          if (progressData) {
-            setProgress(progressData);
+            if (progressData) {
+              // Enrich with student names
+              const enrichedProgress = progressData.map(prog => {
+                const student = studentsData.find(s => s.id === prog.studentId);
+                return {
+                  ...prog,
+                  students: student ? { first_name: student.firstName, last_name: student.lastName } : null
+                };
+              });
+              setProgress(enrichedProgress);
+            }
           }
         }
       }
@@ -104,44 +125,28 @@ const SchoolDashboard = () => {
 
     setCreateLoading(true);
     try {
-      // Create user in auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newStudent.email,
-        password: newStudent.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            first_name: newStudent.firstName,
-            last_name: newStudent.lastName
-          }
-        }
-      });
+      // Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        newStudent.email,
+        newStudent.password
+      );
 
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Create student profile
-        const { error: studentError } = await supabase
-          .from('students')
-          .insert({
-            user_id: authData.user.id,
-            first_name: newStudent.firstName,
-            last_name: newStudent.lastName,
-            email: newStudent.email,
-            school_id: school.id
-          });
-
-        if (studentError) throw studentError;
+      if (userCredential.user) {
+        // Create student profile in Firestore
+        await createDocument(COLLECTIONS.STUDENTS, {
+          userId: userCredential.user.uid,
+          firstName: newStudent.firstName,
+          lastName: newStudent.lastName,
+          email: newStudent.email,
+          schoolId: school!.id
+        });
 
         // Create user role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: 'student'
-          });
-
-        if (roleError) throw roleError;
+        await createDocumentWithId(COLLECTIONS.USER_ROLES, userCredential.user.uid, {
+          userId: userCredential.user.uid,
+          role: 'student'
+        });
 
         toast({
           title: "Success",
@@ -172,13 +177,14 @@ const SchoolDashboard = () => {
   }
 
   const personalityTypes = testResults.reduce((acc, result) => {
-    acc[result.personality_type] = (acc[result.personality_type] || 0) + 1;
+    const type = result.personalityType || 'Unknown';
+    acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader studentName={school?.school_name} />
+      <DashboardHeader studentName={school?.schoolName} />
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
@@ -192,7 +198,7 @@ const SchoolDashboard = () => {
           <TabsContent value="overview" className="mt-6">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-foreground">
-                {school?.school_name || 'School Dashboard'}
+                {school?.schoolName || 'School Dashboard'}
               </h1>
               <p className="text-muted-foreground mt-2">
                 Monitor student progress and career exploration activities
@@ -292,10 +298,10 @@ const SchoolDashboard = () => {
                           {String(result.students?.first_name || '')} {String(result.students?.last_name || '')}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(result.completed_at).toLocaleDateString()}
+                          {result.completedAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
                         </p>
                       </div>
-                      <Badge variant="secondary">{result.personality_type}</Badge>
+                      <Badge variant="secondary">{result.personalityType}</Badge>
                     </div>
                   ))}
                 </div>
@@ -323,14 +329,14 @@ const SchoolDashboard = () => {
                 {students.length > 0 ? (
                   <div className="space-y-3">
                     {students.map((student, index) => {
-                      const studentTests = testResults.filter(r => r.student_id === student.id);
-                      const studentProgress = progress.filter(p => p.student_id === student.id);
+                      const studentTests = testResults.filter(r => r.studentId === student.id);
+                      const studentProgress = progress.filter(p => p.studentId === student.id);
                       
                       return (
                         <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                           <div className="flex-1">
                             <h3 className="font-medium">
-                              {student.first_name} {student.last_name}
+                              {student.firstName} {student.lastName}
                             </h3>
                             <p className="text-sm text-muted-foreground">{student.email}</p>
                             <div className="flex gap-2 mt-2">
@@ -340,18 +346,18 @@ const SchoolDashboard = () => {
                               <Badge variant="outline">
                                 {studentProgress.length} career paths
                               </Badge>
-                              {student.test_completed && (
+                              {student.testCompleted && (
                                 <Badge variant="default">Test Complete</Badge>
                               )}
                             </div>
                           </div>
                           <div className="text-right">
                             <p className="text-sm text-muted-foreground">
-                              Joined: {new Date(student.created_at).toLocaleDateString()}
+                              Joined: {student.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
                             </p>
                             {studentTests.length > 0 && (
                               <Badge variant="secondary" className="mt-1">
-                                {studentTests[0].personality_type}
+                                {studentTests[0].personalityType}
                               </Badge>
                             )}
                           </div>

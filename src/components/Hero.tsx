@@ -4,7 +4,8 @@ import { ArrowRight, Users, BookOpen, Award } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import { BookingForm } from "./BookingForm";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { getDocumentByField } from "@/integrations/firebase/utils";
+import { COLLECTIONS, SiteSetting } from "@/integrations/firebase/types";
 
 export const Hero = () => {
   const navigate = useNavigate();
@@ -17,18 +18,18 @@ export const Hero = () => {
 
   useEffect(() => {
     const fetchHeroData = async () => {
-      const { data } = await supabase
-        .from('site_settings')
-        .select('*')
-        .eq('section', 'hero')
-        .single();
+      const data = await getDocumentByField<SiteSetting>(
+        COLLECTIONS.SITE_SETTINGS,
+        'section',
+        'hero'
+      );
       
       if (data) {
         setHeroData({
           title: data.title || heroData.title,
           subtitle: data.subtitle || heroData.subtitle,
           description: data.description || heroData.description,
-          image_url: data.image_url || heroImage
+          image_url: data.imageUrl || heroImage
         });
       }
     };

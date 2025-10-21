@@ -6,7 +6,8 @@ import { ArrowRight, Smartphone, Brain, GraduationCap, Zap, Users, Target, Star,
 import { useNavigate } from "react-router-dom";
 import { WaitlistForm } from "@/components/WaitlistForm";
 import careerGuruMockup from "@/assets/career-guru-mockup.jpg";
-import { supabase } from "@/integrations/supabase/client";
+import { queryDocuments } from "@/integrations/firebase/utils";
+import { COLLECTIONS, Product } from "@/integrations/firebase/types";
 
 export const Products = () => {
   const navigate = useNavigate();
@@ -15,10 +16,12 @@ export const Products = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const { data } = await supabase
-        .from('products')
-        .select('*')
-        .order('order_position');
+      const data = await queryDocuments<Product>(
+        COLLECTIONS.PRODUCTS,
+        [],
+        'orderPosition',
+        'asc'
+      );
       
       if (data && data.length > 0) {
         setProducts(data.map(product => ({
@@ -28,7 +31,7 @@ export const Products = () => {
           description: product.description,
           status: product.status === 'active' ? 'Available Now' : 'Coming Soon',
           statusColor: product.status === 'active' ? 'bg-green-500' : 'bg-orange-500',
-          image: product.image_url || careerGuruMockup,
+          image: product.imageUrl || careerGuruMockup,
           features: product.features || [],
           stats: [],
           primaryAction: product.status === 'active' ? {

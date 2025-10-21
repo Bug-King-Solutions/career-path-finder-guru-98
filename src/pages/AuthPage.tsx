@@ -7,15 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
+import { auth } from "@/integrations/firebase/config";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { createDocument, createDocumentWithId, queryDocuments, getAllDocuments } from "@/integrations/firebase/utils";
+import { COLLECTIONS, SchoolOption, AppRole } from "@/integrations/firebase/types";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
-
-interface SchoolOption {
-  id: string;
-  school_name: string;
-  school_type: string;
-}
 
 export default function AuthPage() {
   const [email, setEmail] = useState("");
@@ -37,40 +34,41 @@ export default function AuthPage() {
   useEffect(() => {
     // Check if user is already logged in and fetch school options
     const initialize = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/dashboard");
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          navigate("/dashboard");
+        }
+      });
+
+      // Fetch school options for student signup
+      try {
+        const [schoolOptionsData, createdSchoolsData] = await Promise.all([
+          getAllDocuments<SchoolOption>(COLLECTIONS.SCHOOL_OPTIONS),
+          getAllDocuments(COLLECTIONS.SCHOOLS)
+        ]);
+
+        const combinedSchools: SchoolOption[] = [];
+        
+        if (schoolOptionsData) {
+          combinedSchools.push(...schoolOptionsData);
+        }
+        
+        if (createdSchoolsData) {
+          const formattedCreatedSchools = createdSchoolsData.map((school: any) => ({
+            id: school.id,
+            schoolName: school.schoolName,
+            schoolType: 'registered',
+            location: ''
+          }));
+          combinedSchools.push(...formattedCreatedSchools);
+        }
+        
+        setSchoolOptions(combinedSchools);
+      } catch (error) {
+        console.error('Error fetching school options:', error);
       }
 
-      // Fetch school options for student signup (both pre-defined and user-created schools)
-      const [schoolOptionsData, createdSchoolsData] = await Promise.all([
-        supabase
-          .from('school_options')
-          .select('id, school_name, school_type')
-          .order('school_type', { ascending: true })
-          .order('school_name', { ascending: true }),
-        supabase
-          .from('schools')
-          .select('id, school_name')
-          .order('school_name', { ascending: true })
-      ]);
-
-      const combinedSchools: SchoolOption[] = [];
-      
-      if (!schoolOptionsData.error && schoolOptionsData.data) {
-        combinedSchools.push(...schoolOptionsData.data);
-      }
-      
-      if (!createdSchoolsData.error && createdSchoolsData.data) {
-        const formattedCreatedSchools = createdSchoolsData.data.map(school => ({
-          id: school.id,
-          school_name: school.school_name,
-          school_type: 'registered'
-        }));
-        combinedSchools.push(...formattedCreatedSchools);
-      }
-      
-      setSchoolOptions(combinedSchools);
+      return unsubscribe;
     };
     initialize();
   }, [navigate]);
@@ -81,22 +79,15 @@ export default function AuthPage() {
     setError("");
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      await signInWithEmailAndPassword(auth, email, password);
+      
+      toast({
+        title: "Welcome back!",
+        description: "You have been successfully signed in.",
       });
-
-      if (error) {
-        setError(error.message);
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "You have been successfully signed in.",
-        });
-        navigate("/dashboard");
-      }
-    } catch (err) {
-      setError("An unexpected error occurred");
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -120,80 +111,38 @@ export default function AuthPage() {
     }
 
     try {
-      const redirectUrl = `${window.location.origin}/dashboard`;
-      
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            role: userRole,
-            first_name: firstName,
-            last_name: lastName,
-            school_name: schoolName,
-            contact_email: contactEmail || email,
-            student_number: studentNumber,
-          }
-        }
-      });
+      // Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      if (signUpError) {
-        setError(signUpError.message);
-        toast({
-          title: 'Sign Up Failed',
-          description: signUpError.message,
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      if (data.user) {
+      if (user) {
         // Insert user role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: data.user.id,
-            role: userRole as any
-          });
-
-        if (roleError) {
-          console.error('Error inserting user role:', roleError);
-        }
+        await createDocumentWithId(COLLECTIONS.USER_ROLES, user.uid, {
+          userId: user.uid,
+          role: userRole as AppRole
+        });
 
         // Insert profile data based on role
         if (userRole === 'student') {
-          const { error: studentError } = await supabase
-            .from('students')
-            .insert({
-              user_id: data.user.id,
-              first_name: firstName,
-              last_name: lastName,
-              email: email,
-              school_id: selectedSchoolId || null,
-              student_number: studentNumber || null
-            });
-
-          if (studentError) {
-            console.error('Error creating student profile:', studentError);
-          }
+          await createDocument(COLLECTIONS.STUDENTS, {
+            userId: user.uid,
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            schoolId: selectedSchoolId || undefined,
+            studentNumber: studentNumber || undefined
+          });
         } else if (userRole === 'school') {
-          const { error: schoolError } = await supabase
-            .from('schools')
-            .insert({
-              user_id: data.user.id,
-              school_name: schoolName,
-              contact_email: contactEmail || email
-            });
-
-          if (schoolError) {
-            console.error('Error creating school profile:', schoolError);
-          }
+          await createDocument(COLLECTIONS.SCHOOLS, {
+            userId: user.uid,
+            schoolName: schoolName,
+            contactEmail: contactEmail || email
+          });
         }
 
         toast({
           title: 'Account Created!',
-          description: 'Please check your email to verify your account.',
+          description: 'Your account has been successfully created.',
         });
 
         // Clear form
@@ -207,9 +156,17 @@ export default function AuthPage() {
         setSelectedSchoolId('');
         setStudentNumber('');
         setUserRole('student');
+
+        // Navigate to dashboard
+        navigate('/dashboard');
       }
-    } catch (err) {
-      setError("An unexpected error occurred");
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+      toast({
+        title: 'Sign Up Failed',
+        description: err.message || 'An unexpected error occurred',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -229,7 +186,7 @@ export default function AuthPage() {
 
         <Card className="bg-white/95 backdrop-blur-sm">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome to Mindscope Academy</CardTitle>
+            <CardTitle className="text-2xl">Welcome to Career Path Finder</CardTitle>
             <CardDescription>
               Sign in to your account or create a new one
             </CardDescription>
@@ -366,9 +323,9 @@ export default function AuthPage() {
                           <SelectContent>
                             {schoolOptions.map((school) => (
                               <SelectItem key={school.id} value={school.id}>
-                                {school.school_name} ({
-                                  school.school_type === 'secondary' ? 'Secondary School' : 
-                                  school.school_type === 'university' ? 'University' :
+                                {school.schoolName} ({
+                                  school.schoolType === 'secondary' ? 'Secondary School' : 
+                                  school.schoolType === 'university' ? 'University' :
                                   'Registered School'
                                 })
                               </SelectItem>

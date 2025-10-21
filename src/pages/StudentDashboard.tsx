@@ -5,18 +5,19 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, TrendingUp, Users, Target, Brain, Briefcase, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { PsychologyTest } from '@/components/PsychologyTest';
 import { CareerAssessment } from '@/components/CareerAssessment';
 import { SkillsAssessment } from '@/components/SkillsAssessment';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardHeader } from '@/components/DashboardHeader';
+import { getDocumentByField, queryDocuments } from '@/integrations/firebase/utils';
+import { COLLECTIONS, Student, StudentTestResult, StudentProgress } from '@/integrations/firebase/types';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
-  const [student, setStudent] = useState<any>(null);
-  const [testResults, setTestResults] = useState<any[]>([]);
-  const [progress, setProgress] = useState<any[]>([]);
+  const [student, setStudent] = useState<Student | null>(null);
+  const [testResults, setTestResults] = useState<StudentTestResult[]>([]);
+  const [progress, setProgress] = useState<StudentProgress[]>([]);
   const [activeAssessment, setActiveAssessment] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,31 +30,32 @@ const StudentDashboard = () => {
   const fetchStudentData = async () => {
     try {
       // Fetch student profile
-      const { data: studentData } = await supabase
-        .from('students')
-        .select('*')
-        .eq('user_id', user!.id)
-        .single();
+      const studentData = await getDocumentByField<Student>(
+        COLLECTIONS.STUDENTS,
+        'userId',
+        user!.uid
+      );
 
       if (studentData) {
         setStudent(studentData);
 
         // Fetch test results
-        const { data: resultsData } = await supabase
-          .from('student_test_results')
-          .select('*')
-          .eq('student_id', studentData.id)
-          .order('completed_at', { ascending: false });
+        const resultsData = await queryDocuments<StudentTestResult>(
+          COLLECTIONS.STUDENT_TEST_RESULTS,
+          [{ field: 'studentId', operator: '==', value: studentData.id }],
+          'completedAt',
+          'desc'
+        );
 
         if (resultsData) {
           setTestResults(resultsData);
         }
 
         // Fetch progress
-        const { data: progressData } = await supabase
-          .from('student_progress')
-          .select('*')
-          .eq('student_id', studentData.id);
+        const progressData = await queryDocuments<StudentProgress>(
+          COLLECTIONS.STUDENT_PROGRESS,
+          [{ field: 'studentId', operator: '==', value: studentData.id }]
+        );
 
         if (progressData) {
           setProgress(progressData);
@@ -95,12 +97,12 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader studentName={student ? `${student.first_name} ${student.last_name}` : undefined} />
+      <DashboardHeader studentName={student ? `${student.firstName} ${student.lastName}` : undefined} />
       
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-foreground">
-            Welcome back, {student?.first_name}!
+            Welcome back, {student?.firstName}!
           </h2>
           <p className="text-muted-foreground mt-2">
             Continue your personality assessments and career exploration journey
@@ -128,7 +130,7 @@ const StudentDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {progress.length > 0 ? Math.round(progress.reduce((acc, p) => acc + p.progress_percentage, 0) / progress.length) : 0}%
+                {progress.length > 0 ? Math.round(progress.reduce((acc, p) => acc + (p.progressPercentage || 0), 0) / progress.length) : 0}%
               </div>
               <p className="text-xs text-muted-foreground">
                 Overall exploration progress
@@ -156,7 +158,7 @@ const StudentDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {progress.reduce((acc, p) => acc + (p.universities_explored?.length || 0), 0)}
+                {progress.reduce((acc, p) => acc + (p.universitiesExplored?.length || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground">
                 Universities explored
@@ -188,10 +190,10 @@ const StudentDashboard = () => {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium">Latest Result:</span>
-                        <Badge variant="secondary">{testResults[0].personality_type}</Badge>
+                        <Badge variant="secondary">{testResults[0].personalityType}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Completed on {new Date(testResults[0].completed_at).toLocaleDateString()}
+                        Completed on {testResults[0].completedAt.toDate().toLocaleDateString()}
                       </p>
                       <Button onClick={() => setActiveAssessment('psychology')} variant="outline" className="w-full">
                         Take Test Again
@@ -257,7 +259,6 @@ const StudentDashboard = () => {
           </TabsContent>
 
           <TabsContent value="progress" className="space-y-6">
-
             <Card>
               <CardHeader>
                 <CardTitle>Career Exploration Progress</CardTitle>
@@ -267,12 +268,12 @@ const StudentDashboard = () => {
                   progress.map((item, index) => (
                     <div key={index} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{item.course_field}</span>
-                        <span className="text-sm text-muted-foreground">{item.progress_percentage}%</span>
+                        <span className="text-sm font-medium">{item.courseField}</span>
+                        <span className="text-sm text-muted-foreground">{item.progressPercentage}%</span>
                       </div>
-                      <Progress value={item.progress_percentage} className="h-2" />
+                      <Progress value={item.progressPercentage} className="h-2" />
                       <p className="text-xs text-muted-foreground">
-                        {item.universities_explored?.length || 0} universities explored
+                        {item.universitiesExplored?.length || 0} universities explored
                       </p>
                     </div>
                   ))
@@ -299,14 +300,14 @@ const StudentDashboard = () => {
                   <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">{result.personality_type}</Badge>
+                        <Badge variant="outline">{result.personalityType}</Badge>
                         <span className="text-sm text-muted-foreground">
-                          {new Date(result.completed_at).toLocaleDateString()}
+                          {result.completedAt.toDate().toLocaleDateString()}
                         </span>
                       </div>
                       <p className="text-sm mt-1">
                         {result.recommendations?.slice(0, 3).join(', ')}
-                        {result.recommendations?.length > 3 && '...'}
+                        {result.recommendations && result.recommendations.length > 3 && '...'}
                       </p>
                     </div>
                   </div>

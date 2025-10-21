@@ -13,20 +13,23 @@ import {
   CheckCircle
 } from "lucide-react";
 import { BookingForm } from "./BookingForm";
-import { supabase } from "@/integrations/supabase/client";
+import { queryDocuments } from "@/integrations/firebase/utils";
+import { COLLECTIONS, Service } from "@/integrations/firebase/types";
 
 const iconMap: Record<string, any> = {
   Brain, UserCheck, BookOpen, Users, Target, Compass
 };
 
 export const Services = () => {
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   useEffect(() => {
     const fetchServices = async () => {
-      const { data } = await supabase
-        .from('services')
-        .select('*')
-        .order('order_position');
+      const data = await queryDocuments<Service>(
+        COLLECTIONS.SERVICES,
+        [],
+        'orderPosition',
+        'asc'
+      );
       
       if (data) {
         setServices(data);

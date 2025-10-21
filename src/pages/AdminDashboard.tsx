@@ -2,23 +2,30 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Users, BookOpen, Building, Calendar, TrendingUp, Target } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { AdminSchoolManagement } from '@/components/AdminSchoolManagement';
 import { AdminStudentManagement } from '@/components/AdminStudentManagement';
 import { AdminContentManagement } from '@/components/AdminContentManagement';
 import { AdminQuestionManagement } from '@/components/AdminQuestionManagement';
+import { getAllDocuments, queryDocuments } from '@/integrations/firebase/utils';
+import { 
+  COLLECTIONS, 
+  Student, 
+  School, 
+  StudentTestResult, 
+  Booking, 
+  StudentProgress 
+} from '@/integrations/firebase/types';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
-  const [students, setStudents] = useState<any[]>([]);
-  const [schools, setSchools] = useState<any[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
   const [testResults, setTestResults] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
-  const [progress, setProgress] = useState<any[]>([]);
+  const [progress, setProgress] = useState<StudentProgress[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,56 +37,84 @@ const AdminDashboard = () => {
   const fetchAdminData = async () => {
     try {
       // Fetch all students
-      const { data: studentsData } = await supabase
-        .from('students')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const studentsData = await queryDocuments<Student>(
+        COLLECTIONS.STUDENTS,
+        [],
+        'createdAt',
+        'desc'
+      );
 
       if (studentsData) {
         setStudents(studentsData);
       }
 
       // Fetch all schools
-      const { data: schoolsData } = await supabase
-        .from('schools')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const schoolsData = await queryDocuments<School>(
+        COLLECTIONS.SCHOOLS,
+        [],
+        'createdAt',
+        'desc'
+      );
 
       if (schoolsData) {
         setSchools(schoolsData);
       }
 
       // Fetch all test results
-      const { data: resultsData } = await supabase
-        .from('student_test_results')
-        .select('*, students(first_name, last_name)')
-        .order('completed_at', { ascending: false });
+      const resultsData = await queryDocuments<StudentTestResult>(
+        COLLECTIONS.STUDENT_TEST_RESULTS,
+        [],
+        'completedAt',
+        'desc'
+      );
 
       if (resultsData) {
-        setTestResults(resultsData);
+        // Enrich with student names
+        const enrichedResults = resultsData.map(result => {
+          const student = studentsData.find(s => s.id === result.studentId);
+          return {
+            ...result,
+            students: student ? { first_name: student.firstName, last_name: student.lastName } : null
+          };
+        });
+        setTestResults(enrichedResults);
       }
 
       // Fetch all bookings
-      const { data: bookingsData } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          students(first_name, last_name),
-          schools(school_name)
-        `)
-        .order('created_at', { ascending: false });
+      const bookingsData = await queryDocuments<Booking>(
+        COLLECTIONS.BOOKINGS,
+        [],
+        'createdAt',
+        'desc'
+      );
 
       if (bookingsData) {
-        setBookings(bookingsData);
+        // Enrich with student and school names
+        const enrichedBookings = bookingsData.map(booking => {
+          const student = studentsData.find(s => s.id === booking.studentId);
+          const school = schoolsData.find(sch => sch.id === booking.schoolId);
+          return {
+            ...booking,
+            students: student ? { first_name: student.firstName, last_name: student.lastName } : null,
+            schools: school ? { school_name: school.schoolName } : null
+          };
+        });
+        setBookings(enrichedBookings);
       }
 
       // Fetch all progress
-      const { data: progressData } = await supabase
-        .from('student_progress')
-        .select('*, students(first_name, last_name)');
+      const progressData = await getAllDocuments<StudentProgress>(COLLECTIONS.STUDENT_PROGRESS);
 
       if (progressData) {
-        setProgress(progressData);
+        // Enrich with student names
+        const enrichedProgress = progressData.map(prog => {
+          const student = studentsData.find(s => s.id === prog.studentId);
+          return {
+            ...prog,
+            students: student ? { first_name: student.firstName, last_name: student.lastName } : null
+          };
+        });
+        setProgress(enrichedProgress as any);
       }
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -97,14 +132,15 @@ const AdminDashboard = () => {
   }
 
   const personalityTypes = testResults.reduce((acc, result) => {
-    acc[result.personality_type] = (acc[result.personality_type] || 0) + 1;
+    const type = result.personalityType || 'Unknown';
+    acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   const thisMonth = new Date();
   thisMonth.setDate(1);
-  const newStudentsThisMonth = students.filter(s => new Date(s.created_at) >= thisMonth).length;
-  const newSchoolsThisMonth = schools.filter(s => new Date(s.created_at) >= thisMonth).length;
+  const newStudentsThisMonth = students.filter(s => s.createdAt?.toDate() >= thisMonth).length;
+  const newSchoolsThisMonth = schools.filter(s => s.createdAt?.toDate() >= thisMonth).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -254,7 +290,7 @@ const AdminDashboard = () => {
                       {bookings.slice(0, 5).map((booking, index) => (
                         <div key={index} className="p-3 border rounded-lg">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium">{booking.booking_type}</span>
+                            <span className="text-sm font-medium">{booking.bookingType}</span>
                             <Badge 
                               variant={booking.status === 'confirmed' ? 'default' : 
                                       booking.status === 'pending' ? 'secondary' : 'destructive'}
@@ -266,7 +302,7 @@ const AdminDashboard = () => {
                             {String(booking.students?.first_name || '')} {String(booking.students?.last_name || '')} • {String(booking.schools?.school_name || '')}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(booking.created_at).toLocaleDateString()}
+                            {booking.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
                           </p>
                         </div>
                       ))}
@@ -289,13 +325,13 @@ const AdminDashboard = () => {
                       <div key={index} className="p-3 border rounded-lg">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-medium">Test Completed</span>
-                          <Badge variant="outline">{result.personality_type}</Badge>
+                          <Badge variant="outline">{result.personalityType}</Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {String(result.students?.first_name || '')} {String(result.students?.last_name || '')}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(result.completed_at).toLocaleDateString()}
+                          {result.completedAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
                         </p>
                       </div>
                     ))}

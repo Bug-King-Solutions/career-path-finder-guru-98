@@ -11,7 +11,9 @@ import { Brain, ArrowRight, RotateCcw, School } from "lucide-react";
 import { toast } from "sonner";
 import { UniversityRecommendations } from "./UniversityRecommendations";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { queryDocuments, createDocument, updateDocument, getDocumentByField } from "@/integrations/firebase/utils";
+import { COLLECTIONS, SchoolEvaluationQuestion, Student } from "@/integrations/firebase/types";
+import { Timestamp } from "firebase/firestore";
 
 interface Question {
   id: number;
@@ -49,18 +51,20 @@ export const PsychologyTest = () => {
 
   const loadQuestionsWithCustom = async () => {
     try {
-      // Load global psychology questions (school_id is NULL)
-      const { data: globalQuestions, error } = await supabase
-        .from('school_evaluation_questions')
-        .select('*')
-        .is('school_id', null)
-        .eq('section', 'psychology')
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
+      // Load global psychology questions (schoolId is null or undefined)
+      const globalQuestions = await queryDocuments<SchoolEvaluationQuestion>(
+        COLLECTIONS.SCHOOL_EVALUATION_QUESTIONS,
+        [
+          { field: 'section', operator: '==', value: 'psychology' }
+        ],
+        'createdAt',
+        'asc'
+      );
 
       if (globalQuestions && globalQuestions.length > 0) {
-        setAllQuestions(globalQuestions);
+        // Filter for global questions (no schoolId)
+        const filteredQuestions = globalQuestions.filter(q => !q.schoolId);
+        setAllQuestions(filteredQuestions);
       } else {
         toast.error("No questions found. Please contact the administrator.");
       }
@@ -124,44 +128,42 @@ export const PsychologyTest = () => {
     // Save to database
     if (user) {
       try {
-        const { data: studentData } = await supabase
-          .from('students')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        const studentData = await getDocumentByField<Student>(
+          COLLECTIONS.STUDENTS,
+          'userId',
+          user.uid
+        );
 
         if (studentData) {
-          await supabase
-            .from('student_test_results')
-            .insert({
-              student_id: studentData.id,
-              test_type: 'psychology',
-              personality_type: primaryType,
-              scores: scores,
-              recommendations: recommendations
-            });
+          await createDocument(COLLECTIONS.STUDENT_TEST_RESULTS, {
+            studentId: studentData.id,
+            testType: 'psychology',
+            personalityType: primaryType,
+            scores: scores,
+            recommendations: recommendations,
+            completedAt: Timestamp.now()
+          });
 
           // Save all answers
           const answerRecords = Object.entries(finalAnswers).map(([questionId, answer]) => ({
-            student_id: studentData.id,
-            question_id: questionId,
-            answer: answer
+            studentId: studentData.id,
+            questionId: questionId,
+            answer: answer,
+            answeredAt: Timestamp.now()
           }));
 
           if (answerRecords.length > 0) {
-            await supabase
-              .from('student_custom_answers')
-              .insert(answerRecords);
+            for (const record of answerRecords) {
+              await createDocument(COLLECTIONS.STUDENT_CUSTOM_ANSWERS, record);
+            }
           }
 
           // Update student's personality type
-          await supabase
-            .from('students')
-            .update({ 
-              personality_type: primaryType,
-              test_completed: true 
-            })
-            .eq('id', studentData.id);
+          await updateDocument(COLLECTIONS.STUDENTS, studentData.id, {
+            personalityType: primaryType,
+            testCompleted: true,
+            updatedAt: Timestamp.now()
+          });
         }
       } catch (error) {
         console.error('Error saving test results:', error);
@@ -365,7 +367,7 @@ export const PsychologyTest = () => {
       ? currentQ.options 
       : JSON.parse(currentQ.options || '[]');
 
-    switch (currentQ.question_type) {
+    switch (currentQ.questionType) {
       case 'multiple_choice':
         return (
           <div className="space-y-4">
@@ -446,7 +448,7 @@ export const PsychologyTest = () => {
         </div>
         <Progress value={progress} className="h-2 mb-4" />
         <CardTitle className="text-xl">
-          {currentQ.question_text}
+          {currentQ.questionText}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

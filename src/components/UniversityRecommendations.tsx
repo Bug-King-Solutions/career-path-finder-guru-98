@@ -3,14 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, ExternalLink, Star } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { queryDocuments, createDocument, updateDocument, getDocumentByField } from "@/integrations/firebase/utils";
+import { COLLECTIONS, SchoolOption, Student, StudentProgress } from "@/integrations/firebase/types";
+import { Timestamp } from "firebase/firestore";
 
 interface University {
   id: string;
-  school_name: string;
-  school_type: string;
+  schoolName: string;
+  schoolType: string;
   location: string;
 }
 
@@ -32,14 +34,16 @@ export const UniversityRecommendations = ({ selectedCareers, onExploreUniversity
 
   const fetchUniversities = async () => {
     try {
-      const { data, error } = await supabase
-        .from('school_options')
-        .select('*')
-        .eq('school_type', 'University')
-        .order('school_name');
+      const data = await queryDocuments<SchoolOption>(
+        COLLECTIONS.SCHOOL_OPTIONS,
+        [{ field: 'schoolType', operator: '==', value: 'University' }],
+        'schoolName',
+        'asc'
+      );
 
-      if (error) throw error;
-      setUniversities(data || []);
+      if (data) {
+        setUniversities(data as unknown as University[]);
+      }
     } catch (error) {
       console.error('Error fetching universities:', error);
       toast.error('Failed to load universities');
@@ -52,20 +56,20 @@ export const UniversityRecommendations = ({ selectedCareers, onExploreUniversity
     if (!user) return;
 
     try {
-      const { data: studentData } = await supabase
-        .from('students')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      const studentData = await getDocumentByField<Student>(
+        COLLECTIONS.STUDENTS,
+        'userId',
+        user.uid
+      );
 
       if (studentData) {
-        const { data: progressData } = await supabase
-          .from('student_progress')
-          .select('universities_explored')
-          .eq('student_id', studentData.id);
+        const progressData = await queryDocuments<StudentProgress>(
+          COLLECTIONS.STUDENT_PROGRESS,
+          [{ field: 'studentId', operator: '==', value: studentData.id }]
+        );
 
         if (progressData) {
-          const allExplored = progressData.flatMap(p => p.universities_explored || []);
+          const allExplored = progressData.flatMap(p => p.universitiesExplored || []);
           setExploredUniversities([...new Set(allExplored)]);
         }
       }
@@ -78,48 +82,48 @@ export const UniversityRecommendations = ({ selectedCareers, onExploreUniversity
     if (!user || !selectedCareers.length) return;
 
     try {
-      const { data: studentData } = await supabase
-        .from('students')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      const studentData = await getDocumentByField<Student>(
+        COLLECTIONS.STUDENTS,
+        'userId',
+        user.uid
+      );
 
       if (studentData) {
         // Update progress for the selected career field
         const primaryCareer = selectedCareers[0];
         
-        const { data: existingProgress } = await supabase
-          .from('student_progress')
-          .select('*')
-          .eq('student_id', studentData.id)
-          .eq('course_field', primaryCareer)
-          .single();
+        const progressData = await queryDocuments<StudentProgress>(
+          COLLECTIONS.STUDENT_PROGRESS,
+          [
+            { field: 'studentId', operator: '==', value: studentData.id },
+            { field: 'courseField', operator: '==', value: primaryCareer }
+          ]
+        );
 
-        const currentExplored = existingProgress?.universities_explored || [];
+        const existingProgress = progressData && progressData.length > 0 ? progressData[0] : null;
+        const currentExplored = existingProgress?.universitiesExplored || [];
         const updatedExplored = [...new Set([...currentExplored, university.id])];
 
         if (existingProgress) {
-          await supabase
-            .from('student_progress')
-            .update({
-              universities_explored: updatedExplored,
-              progress_percentage: Math.min(100, existingProgress.progress_percentage + 10)
-            })
-            .eq('id', existingProgress.id);
+          await updateDocument(COLLECTIONS.STUDENT_PROGRESS, existingProgress.id, {
+            universitiesExplored: updatedExplored,
+            progressPercentage: Math.min(100, (existingProgress.progressPercentage || 0) + 10),
+            updatedAt: Timestamp.now()
+          });
         } else {
-          await supabase
-            .from('student_progress')
-            .insert({
-              student_id: studentData.id,
-              course_field: primaryCareer,
-              universities_explored: [university.id],
-              progress_percentage: 10
-            });
+          await createDocument(COLLECTIONS.STUDENT_PROGRESS, {
+            studentId: studentData.id,
+            courseField: primaryCareer,
+            universitiesExplored: [university.id],
+            progressPercentage: 10,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
+          });
         }
 
         setExploredUniversities(prev => [...new Set([...prev, university.id])]);
         onExploreUniversity(university.id);
-        toast.success(`Added ${university.school_name} to your explored universities!`);
+        toast.success(`Added ${university.schoolName} to your explored universities!`);
       }
     } catch (error) {
       console.error('Error updating university exploration:', error);
@@ -166,9 +170,9 @@ export const UniversityRecommendations = ({ selectedCareers, onExploreUniversity
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg">{university.school_name}</CardTitle>
+                    <CardTitle className="text-lg">{university.schoolName}</CardTitle>
                     <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="secondary">{university.school_type}</Badge>
+                      <Badge variant="secondary">{university.schoolType}</Badge>
                       {isExplored && (
                         <Badge variant="default" className="bg-green-100 text-green-800">
                           <Star className="w-3 h-3 mr-1" />

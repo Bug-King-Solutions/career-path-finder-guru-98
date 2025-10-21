@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +13,59 @@ import {
   Calendar,
   Building
 } from "lucide-react";
+import { toast } from "sonner";
+import { createDocument } from "@/integrations/firebase/utils";
+import { COLLECTIONS } from "@/integrations/firebase/types";
+import { Timestamp } from "firebase/firestore";
 
 export const Contact = () => {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.subject || !formData.message) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await createDocument(COLLECTIONS.CONTACT_SUBMISSIONS, {
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        company: formData.phone,
+        projectType: formData.subject,
+        message: formData.message,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      });
+
+      toast.success('Message sent successfully! We\'ll get back to you within 24 hours.');
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: ''
+      });
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section id="contact" className="py-20">
       <div className="container mx-auto px-4">
@@ -102,58 +154,95 @@ export const Contact = () => {
                   Fill out the form below and we'll get back to you within 24 hours.
                 </p>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        First Name *
+                      </label>
+                      <Input 
+                        placeholder="Enter your first name" 
+                        className="w-full"
+                        value={formData.firstName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Last Name *
+                      </label>
+                      <Input 
+                        placeholder="Enter your last name" 
+                        className="w-full"
+                        value={formData.lastName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Email Address *
+                      </label>
+                      <Input 
+                        type="email" 
+                        placeholder="Enter your email" 
+                        className="w-full"
+                        value={formData.email}
+                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Phone Number
+                      </label>
+                      <Input 
+                        type="tel" 
+                        placeholder="Enter your phone number" 
+                        className="w-full"
+                        value={formData.phone}
+                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      First Name *
+                      Subject *
                     </label>
-                    <Input placeholder="Enter your first name" className="w-full" />
+                    <Input 
+                      placeholder="What would you like to discuss?" 
+                      className="w-full"
+                      value={formData.subject}
+                      onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                    />
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      Last Name *
+                      Message *
                     </label>
-                    <Input placeholder="Enter your last name" className="w-full" />
+                    <Textarea 
+                      placeholder="Tell us more about your career goals and how we can help..."
+                      className="w-full min-h-[120px]"
+                      value={formData.message}
+                      onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                    />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Email Address *
-                    </label>
-                    <Input type="email" placeholder="Enter your email" className="w-full" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Phone Number
-                    </label>
-                    <Input type="tel" placeholder="Enter your phone number" className="w-full" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Subject *
-                  </label>
-                  <Input placeholder="What would you like to discuss?" className="w-full" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Message *
-                  </label>
-                  <Textarea 
-                    placeholder="Tell us more about your career goals and how we can help..."
-                    className="w-full min-h-[120px]"
-                  />
-                </div>
-
-                <Button variant="hero" size="lg" className="w-full text-lg">
-                  <Send className="mr-2 w-5 h-5" />
-                  Send Message
-                </Button>
+                  <Button 
+                    variant="hero" 
+                    size="lg" 
+                    className="w-full text-lg"
+                    type="submit"
+                    disabled={isSubmitting}
+                  >
+                    <Send className="mr-2 w-5 h-5" />
+                    {isSubmitting ? 'Sending...' : 'Send Message'}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </div>

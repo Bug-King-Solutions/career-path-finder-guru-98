@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -11,8 +12,43 @@ import {
   Youtube,
   Send
 } from "lucide-react";
+import { toast } from "sonner";
+import { createDocument } from "@/integrations/firebase/utils";
+import { COLLECTIONS } from "@/integrations/firebase/types";
+import { Timestamp } from "firebase/firestore";
 
 export const Footer = () => {
+  const [email, setEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      setIsSubscribing(true);
+      await createDocument(COLLECTIONS.NEWSLETTER_SUBSCRIPTIONS, {
+        email: email,
+        status: 'active',
+        subscribedAt: Timestamp.now(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      });
+
+      toast.success('Successfully subscribed to our newsletter!');
+      setEmail('');
+    } catch (error) {
+      console.error('Error subscribing to newsletter:', error);
+      toast.error('Failed to subscribe. Please try again.');
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
+
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-16">
@@ -84,17 +120,24 @@ export const Footer = () => {
             <p className="text-primary-foreground/80 mb-4">
               Subscribe to our newsletter for career tips, university updates, and exclusive content.
             </p>
-            <div className="space-y-3">
+            <form onSubmit={handleNewsletterSubmit} className="space-y-3">
               <Input 
                 type="email" 
                 placeholder="Enter your email" 
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
-              <Button variant="accent" className="w-full">
+              <Button 
+                variant="accent" 
+                className="w-full"
+                type="submit"
+                disabled={isSubscribing}
+              >
                 <Send className="w-4 h-4 mr-2" />
-                Subscribe
+                {isSubscribing ? 'Subscribing...' : 'Subscribe'}
               </Button>
-            </div>
+            </form>
             <p className="text-xs text-primary-foreground/60 mt-2">
               We respect your privacy. Unsubscribe at any time.
             </p>
